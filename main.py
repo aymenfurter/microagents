@@ -11,7 +11,8 @@ class MicroAgentManager:
         self.create_prime_agent()
 
     def create_prime_agent(self):
-        prime_agent = MicroAgent("Initial Prompt for General Tasks", "General", self.agents, self.api_key)
+        # Pass the manager itself (self) to the prime agent
+        prime_agent = MicroAgent("Initial Prompt for General Tasks", "General", self, self.api_key)
         self.agents.append(prime_agent)
 
     def get_embedding(self, text):
@@ -53,7 +54,7 @@ class MicroAgentManager:
             self.agents.sort(key=lambda x: x.usage_count)
             self.agents.pop(0)
 
-        new_agent = MicroAgent("Initial Prompt for " + purpose, purpose, self.agents, self.api_key)
+        new_agent = MicroAgent("Initial Prompt for " + purpose, purpose, self, self.api_key)
         new_agent.usage_count = 1
         self.agents.append(new_agent)
         return new_agent
@@ -72,10 +73,12 @@ class MicroAgentManager:
 
     def respond(self, input_text):
         prime_agent = self.agents[0]
-        purpose = prime_agent.generate_response(f"Determine the purpose for: {input_text}")
+        # Pass the manager to the generate_response method
+        purpose = prime_agent.generate_response(f"Determine the purpose for: {input_text}", self)
 
         agent = self.get_or_create_agent(purpose)
-        response = agent.respond(input_text)
+        # Pass the manager to the agent's respond method
+        response = agent.respond(input_text, self)
 
         if self.goal_reached(response, input_text):
             print("Goal has been reached with response:", response)
