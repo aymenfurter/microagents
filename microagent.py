@@ -97,7 +97,7 @@ class MicroAgent:
         response = self.generate_response(input_text)
         self.evolve_prompt(input_text)
         return response
-
+    
     def evaluate_agent(self, input_text):
         evaluation_query = f"Evaluate this input for quality and relevance (Possible Answers: Very Poor, Poor, Good): '{input_text}'"
         evaluation = openai.ChatCompletion.create(
