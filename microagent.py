@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class MicroAgent:
     static_pre_prompt = (
         "You are a helpful assistant capable of processing various tasks, "
-        "including executing simple Python code within code blocks."
+        "including executing simple Python code within code blocks and deciding when to use other agents."
     )
 
     def __init__(self, initial_prompt, purpose, all_agents, api_key, depth=0, max_depth=5):
@@ -25,27 +25,55 @@ class MicroAgent:
         self.code_block_end = "```"
 
     def generate_runtime_context(self):
-        return f"Agent Purpose: {self.purpose}. Queue Depth: {self.depth}."
+        available_agents = ', '.join([agent.purpose for agent in self.all_agents])
+        return f"Agent Purpose: {self.purpose}. Queue Depth: {self.depth}. Available agents: {available_agents}."
+        
+def generate_response(self, input_text, manager):
+    runtime_context = self.generate_runtime_context()
+    system_prompt = MicroAgent.static_pre_prompt + runtime_context + self.dynamic_prompt
+    conversation_accumulator = ""
+    thought_number = 1
+    action_number = 1
 
-    def generate_response(self, input_text):
-        runtime_context = self.generate_runtime_context()
-        system_prompt = MicroAgent.static_pre_prompt + runtime_context + self.dynamic_prompt
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": input_text}
-        ]
+    for iteration in range(self.max_depth):
+        react_prompt = f"Question: {input_text}\n{conversation_accumulator}\nThought {thought_number}: [Decompose the task. Identify if another agent or Python code execution is needed. Write 'Query Solved' once the task is completed.]\nAction {action_number}: [Specify action based on the thought, e.g., 'Use Agent[XYZ]' for delegation or '```python\n# Python code here\n```' for execution]"
+
         response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=messages
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": react_prompt}
+            ]
         ).choices[0].message['content']
 
-        if self.code_block_start in response and self.code_block_end in response:
-            code_output = self.execute_code(response)
-            if len(code_output) > 1000:
-                code_output = code_output[:200] + code_output[-800:]
-            response += "\n\nCode Execution Output:\n" + code_output
-        return response
+        # Parse the response for actions
+        if "Use Agent[" in response:
+            agent_name = response.split('Use Agent[')[1].split(']')[0]
+            delegated_agent = manager.get_or_create_agent(agent_name)
+            # Delegate the task to the selected agent
+            delegated_response = delegated_agent.respond(input_text)
+            conversation_accumulator += f"\nThought {thought_number}: Delegated task to Agent {agent_name}\nAction {action_number}: {delegated_response}"
 
+        elif "```python" in response:
+            code_to_execute = response.split("```python")[1].split("```")[0]
+            try:
+                # Execute the Python code
+                exec_globals = {}
+                exec(code_to_execute, exec_globals)
+                exec_response = "Executed Python Code Successfully. Output: " + str(exec_globals)
+            except Exception as e:
+                exec_response = f"Error in executing code: {e}"
+            conversation_accumulator += f"\nThought {thought_number}: Executed Python code\nAction {action_number}: {exec_response}"
+
+        thought_number += 1
+        action_number += 1
+
+        if "Query Solved" in response:
+            break
+
+    final_answer = "Final Response: " + conversation_accumulator
+    return final_answer
+    
     def execute_code(self, text_with_code):
         try:
             code_start_index = text_with_code.find(self.code_block_start) + len(self.code_block_start)
@@ -59,7 +87,7 @@ class MicroAgent:
 
     def evolve_prompt(self, input_text):
         feedback = self.evaluate_agent(self.dynamic_prompt, input_text)
-        if "poor" in feedback.lower()
+        if "poor" in feedback.lower():
             evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? ONLY RESPONSE WITH THE NEW PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}"
             new_prompt = openai.ChatCompletion.create(
                 model="gpt-4",
