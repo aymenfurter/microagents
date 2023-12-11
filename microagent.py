@@ -16,6 +16,7 @@ class MicroAgent:
         "Agents are invoked using: 'Use Agent[Purpose of the agent as sentence]'."
         "NEVER call an agent with the same purpose as yourself, if you call another agent you must break the task down. "
         "Write code to solve the task."
+        "A purpose MUST be reuseable and generic. Use names as you would call microservices."
     )
 
     def __init__(self, initial_prompt, purpose, manager, api_key, depth=0, max_depth=5):
@@ -66,7 +67,7 @@ class MicroAgent:
                 agent_name = response.split('Use Agent[')[1].split(']')[0]
                 logging.info(f"Delegating task to Agent: {agent_name}")
                 delegated_agent = self.manager.get_or_create_agent(agent_name)
-                delegated_response = delegated_agent.respond(input_text)
+                delegated_response = delegated_agent.respond(agent_name)
                 conversation_accumulator += f"\nThought {thought_number}: Delegated task to Agent {agent_name}\nAction {action_number}: {delegated_response}"
                 logging.info(f"Conversation: {conversation_accumulator}")
                 logging.info(f"Delegated task to Agent {agent_name}")

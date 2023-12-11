@@ -90,10 +90,9 @@ class MicroAgentManager:
         return response
 
 def main():
-    api_key = "YOUR_API_KEY"
     manager = MicroAgentManager(api_key)
 
-    user_input = "Who is the current president in 2023 of france?"
+    user_input = "Who is the current president in 2023 of france? how is the weather in france? What is the date in france?"
     manager.respond(user_input)
 
 if __name__ == "__main__":
