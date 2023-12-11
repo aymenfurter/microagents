@@ -12,10 +12,10 @@ class MicroAgent:
         "including executing simple Python code within code blocks and deciding when to use other agents."
     )
 
-    def __init__(self, initial_prompt, purpose, all_agents, api_key, depth=0, max_depth=5):
+    def __init__(self, initial_prompt, purpose, manager, api_key, depth=0, max_depth=5):
         self.dynamic_prompt = initial_prompt
         self.purpose = purpose
-        self.all_agents = all_agents
+        self.manager = manager
         self.api_key = api_key
         self.depth = depth
         self.max_depth = max_depth
@@ -25,10 +25,10 @@ class MicroAgent:
         self.code_block_end = "```"
 
     def generate_runtime_context(self):
-        available_agents = ', '.join([agent.purpose for agent in self.all_agents])
+        available_agents = ', '.join([agent.purpose for agent in self.manager.agents])
         return f"Agent Purpose: {self.purpose}. Queue Depth: {self.depth}. Available agents: {available_agents}."
-            
-    def generate_response(self, input_text, manager):
+
+    def generate_response(self, input_text):
         runtime_context = self.generate_runtime_context()
         system_prompt = MicroAgent.static_pre_prompt + runtime_context + self.dynamic_prompt
         conversation_accumulator = ""
@@ -46,18 +46,15 @@ class MicroAgent:
                 ]
             ).choices[0].message['content']
     
-            # Parse the response for actions
             if "Use Agent[" in response:
                 agent_name = response.split('Use Agent[')[1].split(']')[0]
-                delegated_agent = manager.get_or_create_agent(agent_name)
-                # Delegate the task to the selected agent
+                delegated_agent = self.manager.get_or_create_agent(agent_name)
                 delegated_response = delegated_agent.respond(input_text)
                 conversation_accumulator += f"\nThought {thought_number}: Delegated task to Agent {agent_name}\nAction {action_number}: {delegated_response}"
     
             elif "```python" in response:
                 code_to_execute = response.split("```python")[1].split("```")[0]
                 try:
-                    # Execute the Python code
                     exec_globals = {}
                     exec(code_to_execute, exec_globals)
                     exec_response = "Executed Python Code Successfully. Output: " + str(exec_globals)
@@ -73,7 +70,7 @@ class MicroAgent:
     
         final_answer = "Final Response: " + conversation_accumulator
         return final_answer
-        
+
     def execute_code(self, text_with_code):
         try:
             code_start_index = text_with_code.find(self.code_block_start) + len(self.code_block_start)
