@@ -87,11 +87,12 @@ class MicroAgent:
 
     def evolve_prompt(self, input_text):
         feedback = self.evaluate_agent(self.dynamic_prompt, input_text)
+        runtime_context = self.generate_runtime_context()
         if "poor" in feedback.lower():
-            evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? ONLY RESPONSE WITH THE NEW PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}"
+            evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? You may include sample code that should be used or list other agents that should be called. ONLY RESPONSE WITH THE NEW PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}"
             new_prompt = openai.ChatCompletion.create(
                 model="gpt-4",
-                messages=[{"role": "system", "content": evolve_prompt_query}]
+                messages=[{"role": "system", "content": evolve_prompt_query + runtime_context}]
             ).choices[0].message['content'].strip() or self.dynamic_prompt
             self.dynamic_prompt = new_prompt
 
