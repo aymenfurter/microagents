@@ -3,20 +3,38 @@ import subprocess
 import shlex
 
 class MicroAgent:
+    static_pre_prompt = (
+        "You are a helpful assistant capable of processing various tasks, "
+        "including executing simple Python code within code blocks. "
+    )
+
     def __init__(self, initial_prompt, purpose, all_agents, api_key, depth=0, max_depth=5):
-        self.prompt = initial_prompt
+        self.dynamic_prompt = initial_prompt
         self.purpose = purpose
         self.all_agents = all_agents
         self.api_key = api_key
         self.depth = depth
         self.max_depth = max_depth
+        self.usage_count = 0
         openai.api_key = api_key
-        self.code_block_start = "```"
+        self.code_block_start = "```python"
         self.code_block_end = "```"
 
+    def generate_runtime_context(self):
+        return f"Agent Purpose: {self.purpose}. Queue Depth: {self.depth}. "
+
     def generate_response(self, input_text):
-        combined_input = self.prompt + ' ' + input_text
-        response = openai.Completion.create(engine="gpt-4", prompt=combined_input, max_tokens=150).choices[0].text.strip()
+        runtime_context = self.generate_runtime_context()
+        system_prompt = MicroAgent.static_pre_prompt + runtime_context + self.dynamic_prompt
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": input_text}
+        ]
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=messages
+        ).choices[0].message['content']
+
         if self.code_block_start in response and self.code_block_end in response:
             code_output = self.execute_code(response)
             if len(code_output) > 1000:
@@ -39,8 +57,11 @@ class MicroAgent:
         feedback = self.request_evaluations(response, input_text)
         if feedback.count("Poor") > len(feedback) / 2:
             evolve_prompt_query = f"How should the prompt evolve based on this input and feedback? Input: {input_text}, Feedback: {feedback}"
-            new_prompt = openai.Completion.create(engine="gpt-4", prompt=evolve_prompt_query, max_tokens=50)
-            self.prompt = new_prompt.choices[0].text.strip() or self.prompt
+            new_prompt = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "system", "content": evolve_prompt_query}]
+            ).choices[0].message['content'].strip() or self.dynamic_prompt
+            self.dynamic_prompt = new_prompt
 
     def respond(self, input_text):
         if self.depth < self.max_depth:
@@ -59,8 +80,11 @@ class MicroAgent:
 
     def evaluate_at_max_depth(self, input_text):
         evaluation_query = f"Evaluate this input for quality and relevance: '{input_text}'"
-        evaluation = openai.Completion.create(engine="gpt-4", prompt=evaluation_query, max_tokens=50)
-        return evaluation.choices[0].text.strip()
+        evaluation = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "system", "content": evaluation_query}]
+        ).choices[0].message['content']
+        return evaluation
 
     def evaluate(self, response, input_text, depth):
         if depth < self.max_depth:
@@ -69,3 +93,8 @@ class MicroAgent:
                     return agent.evaluate(response, input_text, depth + 1)
         else:
             return self.evaluate_at_max_depth(input_text)
+
+# Example usage:
+# agents = [MicroAgent("I specialize in arithmetic calculations.", "Math", agents, your_api_key), ...]
+# response = agents[0].respond("Calculate 2 + 2.")
+# print(response)
