@@ -18,7 +18,7 @@ class MicroAgent:
         "Agents are invoked using: 'Use Agent[Purpose of the agent as sentence:parameter]'."
         "Example: Use Agent[GetWeatherForLocation:Zurich]"
         "NEVER call an agent with the same purpose as yourself, if you call another agent you must break the task down. "
-        "Write code to solve the task. You can only use the following frameworks: numpy, pandas, requests, beautifulsoup4, matplotlib, seaborn, sqlalchemy, pymysql, scipy, scikit-learn, statsmodels, click, python-dotenv, virtualenv, scrapy, oauthlib, tweepy, datetime, openpyxl, xlrd, loguru, pytest, paramiko, cryptography, lxml"
+        "Write code to solve the task. You can only use the following frameworks: numpy, requests, pandas, requests, beautifulsoup4, matplotlib, seaborn, sqlalchemy, pymysql, scipy, scikit-learn, statsmodels, click, python-dotenv, virtualenv, scrapy, oauthlib, tweepy, datetime, openpyxl, xlrd, loguru, pytest, paramiko, cryptography, lxml"
         "A purpose MUST be reuseable and generic. Use names as you would call microservices."
         "At depth=2, use agents only for tasks that are not well suited for your purpose."
         "Below depth=3, using other agents is NOT allowed. Agents must only use other agents below their depth"
@@ -105,7 +105,7 @@ class MicroAgent:
         final_answer = "Final Response: " + conversation_accumulator
 
         logging.info(f"Final Response: {final_answer}")
-        return final_answer
+        return final_answer, conversation_accumulator
 
     def execute_code(self, text_with_code):
         try:
@@ -118,11 +118,14 @@ class MicroAgent:
             logging.error(f"Error executing code: {e}")
             return f"Error in executing code: {e}"
 
-    def evolve_prompt(self, input_text, output):
+    def evolve_prompt(self, input_text, output, full_conversation):
+        if len(full_conversation) > 1000:
+            full_conversation = full_conversation[:200] + "..." + full_conversation[-1000:]
+
         feedback = self.evaluate_agent(input_text, self.dynamic_prompt, output)
         runtime_context = self.generate_runtime_context()
         if "poor" in feedback.lower():
-            evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? If you don't know something, write sample code in the prompt to solve it. Break down complex tasks by calling other agents if required. Please include python code that should be used to solve a certain task as per purpose or list other agents that should be called. A purpose is always a sentence long. Important: Any problems must be solved through sample code or learned information provided in the prompt.ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}"
+            evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? If you don't know something, write sample code in the prompt to solve it. Break down complex tasks by calling other agents if required. Please include python code that should be used to solve a certain task as per purpose or list other agents that should be called. A purpose is always a sentence long. Important: Any problems must be solved through sample code or learned information provided in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}, full conversation: {full_conversation}"
             logging.info(f"Evolve prompt query: {evolve_prompt_query}")
             new_prompt = self.openai_wrapper.chat_completion(
                 model="gpt-4-1106-preview",
@@ -132,8 +135,8 @@ class MicroAgent:
             self.dynamic_prompt = new_prompt
 
     def respond(self, input_text):
-        response = self.generate_response(input_text)
-        self.evolve_prompt(input_text, response)
+        response, full_conversation = self.generate_response(input_text)
+        self.evolve_prompt(input_text, response, full_conversation)
         return response
     
     def evaluate_agent(self, input_text, prompt, output):

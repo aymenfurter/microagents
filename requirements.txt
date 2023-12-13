@@ -28,6 +28,7 @@ scrapy
 # API Integration
 oauthlib
 tweepy
+requests
 
 # Date and Time
 datetime
