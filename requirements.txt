@@ -1,1 +1,52 @@
-openai==28
+openai==0.28.1
+# Core Libraries
+numpy
+pandas
+requests
+beautifulsoup4
+matplotlib
+seaborn
+
+# Database
+sqlalchemy
+pymysql
+
+# Data Serialization
+# Data Analysis and Visualization
+scipy
+scikit-learn
+statsmodels
+
+# Utility Libraries
+click
+python-dotenv
+virtualenv
+
+# Web Scraping
+scrapy
+
+# API Integration
+oauthlib
+tweepy
+
+# Date and Time
+datetime
+
+# File Handling
+openpyxl
+xlrd
+
+# Logging
+loguru
+
+# Testing
+pytest
+
+# Networking
+paramiko
+
+# Security
+cryptography
+
+# Parsing
+lxml

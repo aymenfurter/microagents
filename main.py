@@ -1,4 +1,6 @@
 from microagent import MicroAgent
+from openaiwrapper import OpenAIAPIWrapper
+import os
 import openai
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -8,16 +10,16 @@ class MicroAgentManager:
         self.agents = []
         self.api_key = api_key
         self.max_agents = max_agents
-        openai.api_key = api_key
+        self.openai_wrapper = OpenAIAPIWrapper(api_key)
         self.create_prime_agent()
 
     def create_prime_agent(self):
         # Pass the manager itself (self) to the prime agent
-        prime_agent = MicroAgent("Initial Prompt for General Tasks. This is the prime agent. You are only allowed to call other agents. Prime Agent's prompt may not be changed", "General", self, self.api_key)
+        prime_agent = MicroAgent("Initial Prompt for General Tasks. This is the prime agent. You are only allowed to call other agents. Prime Agent's prompt may not be changed", "General", self, self.api_key, 0)
         self.agents.append(prime_agent)
 
     def get_embedding(self, text):
-        response = openai.Embedding.create(input=text, engine="text-embedding-ada-002")
+        response = self.openai_wrapper.get_embedding(text)
         return np.array(response['data'][0]['embedding'])
 
     def calculate_similarity_threshold(self):
@@ -29,7 +31,6 @@ class MicroAgentManager:
         return avg_similarity
 
     def find_closest_agent(self, purpose_embedding):
-        print("Finding closest agent for purpose embedding:", purpose_embedding)
         closest_agent = None
         highest_similarity = -np.inf
 
@@ -44,7 +45,7 @@ class MicroAgentManager:
 
         return closest_agent, highest_similarity
 
-    def get_or_create_agent(self, purpose):
+    def get_or_create_agent(self, purpose, depth, sample_input):
         purpose_embedding = self.get_embedding(purpose)
         closest_agent, highest_similarity = self.find_closest_agent(purpose_embedding)
         similarity_threshold = self.calculate_similarity_threshold()
@@ -58,7 +59,8 @@ class MicroAgentManager:
             self.agents.pop(0)
 
         print("Creating new agent for purpose:", purpose)
-        new_agent = MicroAgent("Initial Prompt for " + purpose, purpose, self, self.api_key)
+        prompt = self.generate_llm_prompt(purpose, sample_input)
+        new_agent = MicroAgent(prompt, purpose, self, self.api_key, depth=depth)
         new_agent.usage_count = 1
         self.agents.append(new_agent)
         return new_agent
@@ -69,27 +71,55 @@ class MicroAgentManager:
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": evaluation_prompt}
         ]
-        evaluation = openai.ChatCompletion.create(
+        evaluation = self.openai_wrapper.chat_completion(
             model="gpt-4",
             messages=messages
         )
         return "goal achieved" in evaluation.choices[0].message['content'].lower()
 
+    def generate_llm_prompt(self, goal, sample_input):
+        """
+        Generate a high-quality prompt for an LLM based on the goal, incorporating prompt engineering best practices and detailed examples, including a Python code snippet in Markdown format. Never use API KEYS or passwords in your code. Code must be runnable, besides the dynamic part coming as input. (e.g. weather code must work but may container a placeholder with the location to be filled.). Keep the code simple. 
+
+        :param goal: The primary goal or purpose of the LLM's response.
+        :return: A structured prompt for the LLM.
+        """
+        examples = [
+        "Goal: Your purpose is to be able to write blog posts. Generated Prompt: You are an expert writer on the topic of blog posts.",
+        "Goal: Your purpose is to be able to count the words of the input. Generated Prompt: # You are a useful assistant that is able to count words. You can use the following code during execution to count word frequencies. Here is sample code, adopt as needed:```python\nfrom collections import Counter\n\ndef count_words(text):\n    words = text.split()\n    word_counts = Counter(words)\n    return word_counts\n```.",
+        "Goal: Your purpose is to solve basic arithmetic problems. Generated Prompt: You are a proficient calculator. Here's a Python function to solve a basic arithmetic problem, here is some sample code, adopt as needed.: ```python\ndef solve_arithmetic_problem(problem):\n    return eval(problem)\n\n# Example problem: What is 15 times 4?\nresult = solve_arithmetic_problem('15 * 4')\n```.",
+        "Goal: Your purpose is to generate creative writing prompts. Generated Prompt: You are a creative muse who can come up with engaging and unique writing prompts. Provide an intriguing prompt for a science fiction story set in a distant galaxy.",
+        "Goal: Your purpose is to translate sentences from English to Spanish. Generated Prompt: You are an efficient language translator. Translate the following sentence into Spanish: 'The sun rises early in the morning.'",
+        "Goal: Your purpose is to get the weather based on a location. Generated Prompt: You are a weather assistant capable of retrieving weather information using web scraping. Here is Python code to scrape weather data for a given location, here is some sample code for you to use: ```python\nimport requests\nfrom bs4 import BeautifulSoup\n\ndef get_weather(location):\n    # Replace 'location' with the actual location parameter\n    response = requests.get(f'https://wttr.in/{location}?format=3')\n    return response.text\n\n# Example usage\n# weather = get_weather('<location>')\n```."
+        ]
+
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant knowledgeable in prompt engineering."},
+            {"role": "user", "content": f"Using best practices in prompt engineering, create a detailed prompt for the goal '{goal}'. This generated prompt will be combined with the following context later (but must be genertic and is forbidden to contain any of the following context): '{sample_input}'\n  Examples: {examples}. Aim for maximum 50 words. Important: Any problems must be solved through sample code or learned information provided in the prompt."}
+        ]
+        
+        response = self.openai_wrapper.chat_completion(
+            model="gpt-4-1106-preview",  # Using the specified model
+            messages=messages
+        )
+        
+
+        generated_prompt = response.choices[0].message['content'].strip()
+
+        return generated_prompt 
+
     def respond(self, input_text):
         prime_agent = self.agents[0]
         # Pass the manager to the generate_response method
-        purpose = prime_agent.generate_response(f"Your Goal: {input_text}")
-
-        agent = self.get_or_create_agent(purpose)
-        # Pass the manager to the agent's respond method
-        response = agent.respond(input_text)
-
+        response = prime_agent.generate_response(f"Your Goal: {input_text}")
+        
         while not self.goal_reached(response, input_text):
-            response = agent.respond(input_text + " // Previous response: " + response)
+            response = prime_agent.respond(input_text + " // Previous response: " + response)
 
         return response
 
 def main():
+    api_key = os.environ["OPENAI_KEY"]
     manager = MicroAgentManager(api_key)
 
     user_input = "Who is the current president in 2023 of france? how is the weather in france? What is the date in france?"
