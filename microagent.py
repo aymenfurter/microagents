@@ -34,6 +34,7 @@ class MicroAgent:
         self.max_depth = max_depth
         self.usage_count = 0
         openai.api_key = api_key
+        self.working_agent = True
         self.code_block_start = "```python"
         self.code_block_end = "```"
 
@@ -54,6 +55,7 @@ class MicroAgent:
         conversation_accumulator = ""
         thought_number = 1
         action_number = 1
+        found_new_solution = False
 
         for iteration in range(self.max_depth):
             react_prompt = f"Question: {input_text}\n{conversation_accumulator}\nThought {thought_number}: [Decompose the task. Identify if another agent or Python code execution is needed. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\nAction {action_number}: [Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Paramter for agent]' for delegation or '```python\n# Python code here\n```' for execution]"
@@ -100,12 +102,20 @@ class MicroAgent:
             thought_number += 1
             action_number += 1
             if "Query Solved" in response:
+                if iteration != 1 and self.working_agent is True:
+                    # ReAct chain found solution, we need to adopt current prompt.
+                    found_new_solution = True
+                    logging.info(f"This Agent worked OOTB: " + self.purpose + "!")
+                if iteration == 1: 
+                    # Initial prompt working first try.
+                    self.working_agent = True
+                    logging.info(f"Found first solution for agent: " + self.purpose + "!")
                 break
 
         final_answer = "Final Response: " + conversation_accumulator
 
         logging.info(f"Final Response: {final_answer}")
-        return final_answer, conversation_accumulator
+        return final_answer, conversation_accumulator, found_new_solution
 
     def execute_code(self, text_with_code):
         try:
@@ -118,14 +128,18 @@ class MicroAgent:
             logging.error(f"Error executing code: {e}")
             return f"Error in executing code: {e}"
 
-    def evolve_prompt(self, input_text, output, full_conversation):
+    def evolve_prompt(self, input_text, output, full_conversation, new_solution):
         if len(full_conversation) > 1000:
             full_conversation = full_conversation[:200] + "..." + full_conversation[-1000:]
 
         feedback = self.evaluate_agent(input_text, self.dynamic_prompt, output)
         runtime_context = self.generate_runtime_context()
-        if "poor" in feedback.lower():
-            evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? If you don't know something, write sample code in the prompt to solve it. Break down complex tasks by calling other agents if required. Please include python code that should be used to solve a certain task as per purpose or list other agents that should be called. A purpose is always a sentence long. Important: Any problems must be solved through sample code or learned information provided in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}, full conversation: {full_conversation}"
+        if "poor" in feedback.lower() or new_solution:
+            evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? If you don't know something, write sample code in the prompt to solve it. Break down complex tasks by calling other agents if required. Please include python code that should be used to solve a certain task as per purpose or list other agents that should be called. A purpose is always a sentence long. Important: Any problems must be solved through sample code or learned information provided in the new, updated prompt. It's ok to also put data in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}, full conversation: {full_conversation}"
+            if (new_solution and self.working_agent is False):
+                evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? Take a look at the solution provided in later on in the _full conversation_ section. As you can see, the problem has been solved. We need to learn from this. Adopt the code or solution found, make it reusable and compile a new, updated system prompt, so the solution can be reused in the future. Remember: Problems are solved through sample code or learned information provided in the new, updatedprompt. It's ok to also put data in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}, full conversation: {full_conversation}"
+                self.working_agent = True
+                logging.info(f"Found first solution for agent: " + self.purpose + "!")
             logging.info(f"Evolve prompt query: {evolve_prompt_query}")
             new_prompt = self.openai_wrapper.chat_completion(
                 model="gpt-4-1106-preview",
@@ -135,12 +149,12 @@ class MicroAgent:
             self.dynamic_prompt = new_prompt
 
     def respond(self, input_text):
-        response, full_conversation = self.generate_response(input_text)
-        self.evolve_prompt(input_text, response, full_conversation)
+        response, full_conversation, new_solution = self.generate_response(input_text)
+        self.evolve_prompt(input_text, response, full_conversation, new_solution)
         return response
     
     def evaluate_agent(self, input_text, prompt, output):
-        evaluation_query = f"Evaluate the generated LLM Output: '{input_text}' with the current prompt '{prompt}' for quality and relevance (Possible Answers: Poor, Good), LLM output with current prompt: '{output}'"
+        evaluation_query = f"Evaluate the generated LLM Output: '{input_text}' with the current prompt '{prompt}' for quality and relevance (Possible Answers: Poor, Good, Perfect), LLM output with current prompt: '{output}'"
         logging.info(f"Evaluation query: {evaluation_query}")
         logging.info(f"Current prompt: {prompt}")
         logging.info(f"Current output: {output}")

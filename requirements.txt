@@ -38,6 +38,7 @@ openpyxl
 xlrd
 
 # Logging
+wikpedia
 loguru
 
 # Testing
