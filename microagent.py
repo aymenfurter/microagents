@@ -13,7 +13,8 @@ class MicroAgent:
         "Current Time: " + currentDatetime.strftime("%H:%M:%S") + ". "
         "You are an autonomous agent capable of processing various tasks, "
         "including executing simple Python code within code blocks with an internet connection (i.e. to get real-time information) and deciding when to use other agents (to break down tasks). "
-        "Agents are invoked using: 'Use Agent[Purpose of the agent as sentence]'."
+        "Agents are invoked using: 'Use Agent[Purpose of the agent as sentence:parameter]'."
+        "Example: Use Agent[GetWeatherForLocation:Zurich]"
         "NEVER call an agent with the same purpose as yourself, if you call another agent you must break the task down. "
         "Write code to solve the task."
         "A purpose MUST be reuseable and generic. Use names as you would call microservices."
@@ -65,6 +66,9 @@ class MicroAgent:
 
             if "Use Agent[" in response:
                 agent_name = response.split('Use Agent[')[1].split(']')[0]
+                # agent name is split by ":", left is name of agent, right is input
+                input = 
+    
                 logging.info(f"Delegating task to Agent: {agent_name}")
                 delegated_agent = self.manager.get_or_create_agent(agent_name)
                 delegated_response = delegated_agent.respond(agent_name)
