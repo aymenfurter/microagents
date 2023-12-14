@@ -136,8 +136,7 @@ def main():
     manager = MicroAgentManager(api_key)
     
     user_inputs = [
-        "What is 5*10?",
-        "What are the most popular GitHub repositories?",
+        "What is 54334*13240?",
         "What is the population of Thailand?",
         "What is the population of Sweden?",
         "What is the population of the smallest country on earth?",
