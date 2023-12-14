@@ -136,11 +136,9 @@ def main():
     manager = MicroAgentManager(api_key)
     
     user_inputs = [
-        "What is 54334*13240?",
         "What is the population of Thailand?",
         "What is the population of Sweden?",
-        "What is the population of the smallest country on earth?",
-        "What is the biggest news headline right now?"
+        "What is the population of the smallest country on earth?"
     ]
     
     for user_input in user_inputs:
