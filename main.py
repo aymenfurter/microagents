@@ -4,6 +4,7 @@ from openaiwrapper import OpenAIAPIWrapper
 import os
 import openai
 import numpy as np
+import logging
 from sklearn.metrics.pairwise import cosine_similarity
 
 class MicroAgentManager:
@@ -13,9 +14,9 @@ class MicroAgentManager:
         self.max_agents = max_agents
         self.openai_wrapper = OpenAIAPIWrapper(api_key)
         self.create_prime_agent()
+        self.self_optimization = True
 
     def create_prime_agent(self):
-        # Pass the manager itself (self) to the prime agent
         prime_agent = MicroAgent("This is the prime agent. You are only allowed to call other agents. Prime Agent's prompt may not be changed", "General", self, self.api_key, 0, 25, True)
         self.agents.append(prime_agent)
 
@@ -65,6 +66,19 @@ class MicroAgentManager:
         new_agent.usage_count = 1
         self.agents.append(new_agent)
         return new_agent
+    def extractResponseFromPrompt(self, prompt, question):
+        extraction_prompt = f"Extract the response for question '{question}' from the following prompt: '{prompt}'. If it is not present, give a 10 word explaination why it failed."
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": extraction_prompt}
+        ]
+        extraction = self.openai_wrapper.chat_completion(
+            model="gpt-4",
+            messages=messages,
+            max_tokens=100,
+        )
+
+        return extraction.choices[0].message['content'].strip()
 
     def goal_reached(self, response, user_input):
         evaluation_prompt = f"Given the user input: '{user_input}', and the agent response: '{response}', has the goal been achieved? Respond with 'goal achieved' or 'goal not achieved'."
@@ -110,7 +124,6 @@ class MicroAgentManager:
 
     def respond(self, input_text):
         prime_agent = self.agents[0]
-        # Pass the manager to the generate_response method
         response = prime_agent.generate_response(f"Your Goal: {input_text}")
         
         while not self.goal_reached(response, input_text):
@@ -122,8 +135,24 @@ def main():
     api_key = os.environ["OPENAI_KEY"]
     manager = MicroAgentManager(api_key)
     
-    user_input = "What is the population of Thailand? "
-    print(manager.respond(user_input))
+    user_inputs = [
+        "What is 5*10?",
+        "What are the most popular GitHub repositories?",
+        "What is the population of Thailand?",
+        "What is the population of Sweden?",
+        "What is the population of the smallest country on earth?",
+        "What is the biggest news headline right now?"
+    ]
+    
+    for user_input in user_inputs:
+        start_time = time.time()
+        response = manager.respond(user_input)
+        final_response = manager.extractResponseFromPrompt(response, user_input)
+        print("Question:", user_input)
+        print("Response:", final_response)
+        end_time = time.time() - start_time
+        print("Time taken:", end_time)
+        print("Number of Agents:", len(manager.agents))
 
 if __name__ == "__main__":
     main()

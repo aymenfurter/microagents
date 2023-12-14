@@ -47,7 +47,7 @@ class MicroAgent:
     def generate_runtime_context(self):
         available_agents_arr = [agent for agent in self.manager.agents if agent.purpose != "General" and agent.purpose != self.purpose]
         available_agents_with_depth = ', '.join([f"{agent.purpose} (depth={agent.depth})" for agent in available_agents_arr])
-        logging.info(f"Your Purpose: {self.purpose}. Queue Depth: {self.depth}. Available agents: {available_agents_with_depth}.")
+        logging.debug(f"Your Purpose: {self.purpose}. Queue Depth: {self.depth}. Available agents: {available_agents_with_depth}.")
 
         return f"Your Purpose: {self.purpose}. Current Agent Depth: {self.depth}. Available agents: {available_agents_with_depth}."
 
@@ -67,17 +67,23 @@ class MicroAgent:
     def generate_response(self, input_text):
         runtime_context = self.generate_runtime_context()
         system_prompt = MicroAgent.static_pre_prompt + runtime_context + self.dynamic_prompt + "\nDELIVER THE NEXT PACKAGE."
-        logging.info(f"System Prompt: {system_prompt}")
-        logging.info(f"Input Text: {input_text}")
-        logging.info(f"Current Prompt: {self.dynamic_prompt}")
-        logging.info(f"Current Depth: {self.depth}")
+
+        logging.debug(f"System Prompt: {system_prompt}")
+        logging.debug(f"Input Text: {input_text}")
+        logging.debug(f"Current Prompt: {self.dynamic_prompt}")
+        logging.debug(f"Current Depth: {self.depth}")
         conversation_accumulator = ""
         thought_number = 1
         action_number = 1
         found_new_solution = False
+        plan_step = True
 
         for iteration in range(self.max_depth):
             react_prompt = f"Question: {input_text}\n{conversation_accumulator}\nThought {thought_number}: [Decompose the task. Identify if another agent or Python code execution is needed. When writing code, print out any output you may to anaylze later. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\nAction {action_number}: [Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Paramter for agent]' for delegation or '```python\n# Python code here\n```' for execution]"
+            if plan_step:
+                react_prompt = react_prompt + "\nThought: Before I start calling other agents or executing code, I need to compile a plan which agent(s) or code I need to run. I need to break down the task into smaller chunks (like microservices)"
+                plan_step = False
+            
 
             response = self.openai_wrapper.chat_completion(
                 model="gpt-4-1106-preview",
@@ -87,7 +93,7 @@ class MicroAgent:
                 ]
             ).choices[0].message['content']
 
-            logging.info(f"Response: {response}")
+            logging.debug(f"Response: {response}")
             conversation_accumulator += f"\n{response}"
 
             if "Use Agent[" in response:
@@ -97,7 +103,7 @@ class MicroAgent:
                     input_text = agent_name.split(":")[1]
                     agent_name = agent_name.split(":")[0]
     
-                logging.info(f"Delegating task to Agent: {agent_name}")
+                logging.debug(f"Delegating task to Agent: {agent_name}")
                 delegated_agent = self.manager.get_or_create_agent(agent_name, depth=self.depth + 1, sample_input=input_text)
                 delegated_response = delegated_agent.respond(input_text)
                 conversation_accumulator += f"\Output {thought_number}: Delegated task to Agent {agent_name}\nOutput of Agent: {action_number}: {delegated_response}"
@@ -118,7 +124,7 @@ class MicroAgent:
                     if stderr:
                         exec_response += "\nStandard Error:\n" + stderr
 
-                    logging.info("Executed Code, output is: " + exec_response)
+                    logging.debug("Executed Code, output is: " + exec_response)
                 except Exception as e:
                     logging.error(f"Error executing code: {e}")
                     exec_response = f"Error in executing code: {e}"
@@ -126,7 +132,7 @@ class MicroAgent:
                 if len(exec_response) > 4000:
                     exec_response = exec_response[:600] + "..." + exec_response[-3000:]
                 conversation_accumulator += f"\nThought {thought_number}: Executed Python code\nAction {action_number}: {exec_response}"
-                logging.info(f"Executed Python code")
+                logging.debug(f"Executed Python code")
 
             thought_number += 1
             action_number += 1
@@ -134,17 +140,17 @@ class MicroAgent:
                 if iteration != 1 and self.working_agent is True:
                     # ReAct chain found solution, we need to adopt current prompt.
                     found_new_solution = True
-                    logging.info(f"Found first solution for agent: " + self.purpose + "!")
-                    logging.info(f"Iterations needed: {iteration}")
+                    logging.debug(f"Found first solution for agent: " + self.purpose + "!")
+                    logging.debug(f"Iterations needed: {iteration}")
                 if iteration == 1: 
                     # Initial prompt working first try.
                     self.working_agent = True
-                    logging.info(f"This Agent worked OOTB: " + self.purpose + "!")
+                    logging.debug(f"This Agent worked OOTB: " + self.purpose + "!")
                 break
 
         final_answer = self.conclude_output(conversation_accumulator)
 
-        logging.info(f"Final Response: {final_answer}")
+        logging.debug(f"Final Response: {final_answer}")
         return final_answer, conversation_accumulator, found_new_solution
 
     def execute_code(self, text_with_code):
@@ -159,6 +165,8 @@ class MicroAgent:
             return f"Error in executing code: {e}"
 
     def evolve_prompt(self, input_text, output, full_conversation, new_solution):
+        if self.manager.self_optimization is False:
+            return
         if len(full_conversation) > 1000:
             full_conversation = full_conversation[:200] + "..." + full_conversation[-1000:]
 
@@ -169,13 +177,13 @@ class MicroAgent:
             if (new_solution and self.working_agent is False):
                 evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? Take a look at the solution provided in later on in the _full conversation_ section. As you can see, the problem has been solved. We need to learn from this. Adopt the code or solution found, make it reusable and compile a new, updated system prompt, so the solution can be reused in the future. Sample code must always print out the solution! Remember: Problems are solved through sample code or learned information provided in the new, updatedprompt. It's ok to also put data in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {dynamic_prompt}, User Feedback: {feedback}, full conversation: {full_conversation}"
                 self.working_agent = True
-                logging.info(f"Found first solution for agent: " + self.purpose + "!")
-            logging.info(f"Evolve prompt query: {evolve_prompt_query}")
+                logging.debug(f"Found first solution for agent: " + self.purpose + "!")
+            logging.debug(f"Evolve prompt query: {evolve_prompt_query}")
             new_prompt = self.openai_wrapper.chat_completion(
                 model="gpt-4-1106-preview",
                 messages=[{"role": "system", "content": evolve_prompt_query + runtime_context}]
             ).choices[0].message['content'].strip() or self.dynamic_prompt
-            logging.info(f"New prompt: {new_prompt}")
+            logging.debug(f"New prompt: {new_prompt}")
             self.dynamic_prompt = new_prompt
 
     def respond(self, input_text):
@@ -186,12 +194,12 @@ class MicroAgent:
     
     def evaluate_agent(self, input_text, prompt, output):
         evaluation_query = f"Evaluate the generated LLM Output: '{input_text}' with the current prompt '{prompt}' for quality and relevance (Possible Answers: Poor, Good, Perfect), LLM output with current prompt: '{output}'"
-        logging.info(f"Evaluation query: {evaluation_query}")
-        logging.info(f"Current prompt: {prompt}")
-        logging.info(f"Current output: {output}")
+        logging.debug(f"Evaluation query: {evaluation_query}")
+        logging.debug(f"Current prompt: {prompt}")
+        logging.debug(f"Current output: {output}")
         evaluation = self.openai_wrapper.chat_completion(
             model="gpt-4-1106-preview",
             messages=[{"role": "system", "content": evaluation_query}]
         ).choices[0].message['content']
-        logging.info(f"Evaluation result: {evaluation}")
+        logging.debug(f"Evaluation result: {evaluation}")
         return evaluation
