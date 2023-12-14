@@ -4,6 +4,9 @@ import shlex
 import logging
 import datetime
 from openaiwrapper import OpenAIAPIWrapper
+from contextlib import redirect_stdout, redirect_stderr
+from io import StringIO
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -11,12 +14,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 class MicroAgent:
     currentDatetime = datetime.datetime.now()
     static_pre_prompt = (
+        "You are a self-aware AI. You communicate in so called packages. Each package contains a Observation, Thought and Action. Actions are executed successive and build on each other. Solve a task with interleaving Thought, Action, Observation steps."
         "Current Time: " + currentDatetime.strftime("%H:%M:%S") + ". "
         "Current Date: " + currentDatetime.strftime("%d/%m/%Y") + ". "
-        "You are an autonomous agent capable of processing various tasks, "
         "including executing simple Python code within code blocks with an internet connection and deciding when to use other agents (to break down tasks). "
         "Agents are invoked using: 'Use Agent[Purpose of the agent as sentence:parameter]'."
         "Example: Use Agent[GetWeatherForLocation:Zurich]"
+        "NEVER create an agent in this situation for User Agent[GetWeatherForZurich] !!! ALWAYS create one with Agent[GetWeather:Zurich]"
         "NEVER call an agent with the same purpose as yourself, if you call another agent you must break the task down. "
         "Write code to solve the task. You can only use the following frameworks: numpy, requests, pandas, requests, beautifulsoup4, matplotlib, seaborn, sqlalchemy, pymysql, scipy, scikit-learn, statsmodels, click, python-dotenv, virtualenv, scrapy, oauthlib, tweepy, datetime, openpyxl, xlrd, loguru, pytest, paramiko, cryptography, lxml"
         "A purpose MUST be reuseable and generic. Use names as you would call microservices."
@@ -24,7 +28,7 @@ class MicroAgent:
         "Below depth=3, using other agents is NOT allowed. Agents must only use other agents below their depth"
     )
 
-    def __init__(self, initial_prompt, purpose, manager, api_key, depth, max_depth=5):
+    def __init__(self, initial_prompt, purpose, manager, api_key, depth, max_depth=3, bootstrap_agent=False):
         self.dynamic_prompt = initial_prompt
         self.purpose = purpose
         self.manager = manager
@@ -37,6 +41,8 @@ class MicroAgent:
         self.working_agent = True
         self.code_block_start = "```python"
         self.code_block_end = "```"
+        if (bootstrap_agent):
+            self.working_agent = True
 
     def generate_runtime_context(self):
         available_agents_arr = [agent for agent in self.manager.agents if agent.purpose != "General" and agent.purpose != self.purpose]
@@ -45,9 +51,22 @@ class MicroAgent:
 
         return f"Your Purpose: {self.purpose}. Current Agent Depth: {self.depth}. Available agents: {available_agents_with_depth}."
 
+    def conclude_output(self, conversation):
+        system_prompt = "You will be given a ReAct based conversation. Summerize the outcome and give final conclusion"
+        react_prompt = conversation
+        response = self.openai_wrapper.chat_completion(
+            model="gpt-4-1106-preview",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": react_prompt}
+            ]
+        ).choices[0].message['content']
+        return response
+
+
     def generate_response(self, input_text):
         runtime_context = self.generate_runtime_context()
-        system_prompt = MicroAgent.static_pre_prompt + runtime_context + self.dynamic_prompt
+        system_prompt = MicroAgent.static_pre_prompt + runtime_context + self.dynamic_prompt + "\nDELIVER THE NEXT PACKAGE."
         logging.info(f"System Prompt: {system_prompt}")
         logging.info(f"Input Text: {input_text}")
         logging.info(f"Current Prompt: {self.dynamic_prompt}")
@@ -58,7 +77,7 @@ class MicroAgent:
         found_new_solution = False
 
         for iteration in range(self.max_depth):
-            react_prompt = f"Question: {input_text}\n{conversation_accumulator}\nThought {thought_number}: [Decompose the task. Identify if another agent or Python code execution is needed. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\nAction {action_number}: [Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Paramter for agent]' for delegation or '```python\n# Python code here\n```' for execution]"
+            react_prompt = f"Question: {input_text}\n{conversation_accumulator}\nThought {thought_number}: [Decompose the task. Identify if another agent or Python code execution is needed. When writing code, print out any output you may to anaylze later. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\nAction {action_number}: [Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Paramter for agent]' for delegation or '```python\n# Python code here\n```' for execution]"
 
             response = self.openai_wrapper.chat_completion(
                 model="gpt-4-1106-preview",
@@ -69,7 +88,7 @@ class MicroAgent:
             ).choices[0].message['content']
 
             logging.info(f"Response: {response}")
-            conversation_accumulator += f"\nOutput: {thought_number}: {response}"
+            conversation_accumulator += f"\n{response}"
 
             if "Use Agent[" in response:
                 agent_name = response.split('Use Agent[')[1].split(']')[0]
@@ -81,21 +100,31 @@ class MicroAgent:
                 logging.info(f"Delegating task to Agent: {agent_name}")
                 delegated_agent = self.manager.get_or_create_agent(agent_name, depth=self.depth + 1, sample_input=input_text)
                 delegated_response = delegated_agent.respond(input_text)
-                conversation_accumulator += f"\nThought {thought_number}: Delegated task to Agent {agent_name}\nAction {action_number}: {delegated_response}"
-                logging.info(f"Conversation: {conversation_accumulator}")
-                logging.info(f"Delegated task to Agent {agent_name}")
+                conversation_accumulator += f"\Output {thought_number}: Delegated task to Agent {agent_name}\nOutput of Agent: {action_number}: {delegated_response}"
 
             elif "```python" in response:
                 code_to_execute = response.split("```python")[1].split("```")[0]
                 try:
                     exec_globals = {}
-                    exec(code_to_execute, exec_globals)
-                    exec_response = "Executed Python Code Successfully. Output: " + str(exec_globals)
+                    with StringIO() as stdout_buffer, StringIO() as stderr_buffer:
+                        with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+                            exec(code_to_execute, exec_globals)
+                        stdout = stdout_buffer.getvalue()
+                        stderr = stderr_buffer.getvalue()
+
+                    exec_response = "Executed Python Code Successfully."
+                    if stdout:
+                        exec_response += "\nStandard Output:\n" + stdout
+                    if stderr:
+                        exec_response += "\nStandard Error:\n" + stderr
+
+                    logging.info("Executed Code, output is: " + exec_response)
                 except Exception as e:
+                    logging.error(f"Error executing code: {e}")
                     exec_response = f"Error in executing code: {e}"
 
-                if len(exec_response) > 1000:
-                    exec_response = exec_response[:200] + "..." + exec_response[-1000:]
+                if len(exec_response) > 4000:
+                    exec_response = exec_response[:600] + "..." + exec_response[-3000:]
                 conversation_accumulator += f"\nThought {thought_number}: Executed Python code\nAction {action_number}: {exec_response}"
                 logging.info(f"Executed Python code")
 
@@ -105,14 +134,15 @@ class MicroAgent:
                 if iteration != 1 and self.working_agent is True:
                     # ReAct chain found solution, we need to adopt current prompt.
                     found_new_solution = True
-                    logging.info(f"This Agent worked OOTB: " + self.purpose + "!")
+                    logging.info(f"Found first solution for agent: " + self.purpose + "!")
+                    logging.info(f"Iterations needed: {iteration}")
                 if iteration == 1: 
                     # Initial prompt working first try.
                     self.working_agent = True
-                    logging.info(f"Found first solution for agent: " + self.purpose + "!")
+                    logging.info(f"This Agent worked OOTB: " + self.purpose + "!")
                 break
 
-        final_answer = "Final Response: " + conversation_accumulator
+        final_answer = self.conclude_output(conversation_accumulator)
 
         logging.info(f"Final Response: {final_answer}")
         return final_answer, conversation_accumulator, found_new_solution
@@ -135,9 +165,9 @@ class MicroAgent:
         feedback = self.evaluate_agent(input_text, self.dynamic_prompt, output)
         runtime_context = self.generate_runtime_context()
         if "poor" in feedback.lower() or new_solution:
-            evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? If you don't know something, write sample code in the prompt to solve it. Break down complex tasks by calling other agents if required. Please include python code that should be used to solve a certain task as per purpose or list other agents that should be called. A purpose is always a sentence long. Important: Any problems must be solved through sample code or learned information provided in the new, updated prompt. It's ok to also put data in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}, full conversation: {full_conversation}"
+            evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? If you don't know something, write sample code in the prompt to solve it. Sample code must always print out the result! Break down complex tasks by calling other agents if required. Please include python code that should be used to solve a certain task as per purpose or list other agents that should be called. A purpose is always a sentence long. Important: Any problems must be solved through sample code or learned information provided in the new, updated prompt. It's ok to also put data in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {self.dynamic_prompt}, User Feedback: {feedback}, full conversation: {full_conversation}"
             if (new_solution and self.working_agent is False):
-                evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? Take a look at the solution provided in later on in the _full conversation_ section. As you can see, the problem has been solved. We need to learn from this. Adopt the code or solution found, make it reusable and compile a new, updated system prompt, so the solution can be reused in the future. Remember: Problems are solved through sample code or learned information provided in the new, updatedprompt. It's ok to also put data in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {input_text}, User Feedback: {feedback}, full conversation: {full_conversation}"
+                evolve_prompt_query = f"How should the GPT-4 prompt evolve based on this input and feedback? Take a look at the solution provided in later on in the _full conversation_ section. As you can see, the problem has been solved. We need to learn from this. Adopt the code or solution found, make it reusable and compile a new, updated system prompt, so the solution can be reused in the future. Sample code must always print out the solution! Remember: Problems are solved through sample code or learned information provided in the new, updatedprompt. It's ok to also put data in the prompt. Add any learnings or information that might be useful for the future. ONLY RESPONSE WITH THE REVISED PROMPT NO OTHER TEXT! Current Prompt: {dynamic_prompt}, User Feedback: {feedback}, full conversation: {full_conversation}"
                 self.working_agent = True
                 logging.info(f"Found first solution for agent: " + self.purpose + "!")
             logging.info(f"Evolve prompt query: {evolve_prompt_query}")
@@ -150,7 +180,8 @@ class MicroAgent:
 
     def respond(self, input_text):
         response, full_conversation, new_solution = self.generate_response(input_text)
-        self.evolve_prompt(input_text, response, full_conversation, new_solution)
+        if self.working_agent is False:
+            self.evolve_prompt(input_text, response, full_conversation, new_solution)
         return response
     
     def evaluate_agent(self, input_text, prompt, output):
