@@ -1,3 +1,7 @@
+prettytable
+termcolor
+colorama
+terminaltables
 openai==0.28.1
 # Core Libraries
 numpy
@@ -38,7 +42,7 @@ openpyxl
 xlrd
 
 # Logging
-wikpedia
+wikipedia
 loguru
 
 # Testing

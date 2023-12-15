@@ -3,10 +3,11 @@ import time
 
 class OpenAIAPIWrapper:
     def __init__(self, api_key, timeout=10):
+        self.api_key = api_key
         openai.api_key = api_key
         self.timeout = timeout
         self.cache = {}
-
+    
     def get_embedding(self, text):
         if text in self.cache:
             return self.cache[text]

@@ -15,7 +15,7 @@ EXAMPLES = [
 PROMPT_ENGINEERING_TEMPLATE = (
     "Using best practices in prompt engineering, create a detailed prompt for the goal '{goal}'. "
     "This generated prompt will be combined with the following context later (but must be generic and is forbidden to contain any of the following context): '{sample_input}'\n"
-    "Examples: {EXAMPLES}. Aim for maximum 50 words. Important: Any problems must be solved through sample code or learned information provided in the prompt. "
+    "Examples: {examples}. Aim for maximum 50 words. Important: Any problems must be solved through sample code or learned information provided in the prompt. "
     "Any sample code provided must be executable in isolation. Avoid unresolvable placeholders for URLs and API Keys. "
     "If you retrieve information from the web, avoid parsing HTML Code or use regex, just process the text data and print it out (As shown in the examples)!!! "
     "As long as the answer is somewhere in the output, and it is below 1k characters, its a perfect solution. Use real existing services and websites. Don't invent services or use example.com."
@@ -59,8 +59,6 @@ STATIC_PRE_PROMPT = (
 )
 
 USER_INPUTS = [
-    "What is the population of Thailand?",
-    "What is the population of Sweden?",
-    "What is the population of the smallest country on earth?"
+    "What is the population of Thailand?"
 ]
 
