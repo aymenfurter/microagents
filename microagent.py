@@ -120,10 +120,8 @@ class MicroAgent:
             action_number += 1
             if "Query Solved" in response:
                 if iteration != 1 and self.working_agent is True:
-                    # ReAct chain found solution, we need to adopt current prompt.
                     found_new_solution = True
                 if iteration == 1: 
-                    # Initial prompt working first try.
                     self.working_agent = True
                 break
 
