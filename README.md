@@ -1,6 +1,8 @@
 # Microagents: Modular Agents Capable of Self-Editing and Enhancing Their Prompts and Python code
 
-![Self-Composing Agents](static/output.gif?raw=true)
+<a href="https://raw.githubusercontent.com/aymenfurter/microagents/main/static/output.gif" target="_blank">
+<img src="https://raw.githubusercontent.com/aymenfurter/microagents/main/static/output.gif?raw=true"
+Fullscreen</a>
 
 ## Overview
 This experiment explores self-evolving agents that automatically generate and improve themselves. No specific agent design or prompting is required from the user. Simply pose a question, and the system initiates and evolves agents tailored to provide answers. Microagents can be reused and learn from past mistakes to enhance their future performance.
