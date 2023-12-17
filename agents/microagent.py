@@ -16,7 +16,7 @@ class MicroAgent:
     that interacts with the OpenAI API.
     """
     
-    def __init__(self, initial_prompt, purpose, depth, agent_creator, openai_wrapper, max_depth=3, bootstrap_agent=False):
+    def __init__(self, initial_prompt, purpose, depth, agent_creator, openai_wrapper, max_depth=3, bootstrap_agent=False, is_prime=False):
         self.dynamic_prompt = initial_prompt
         self.purpose = purpose
         self.depth = depth
@@ -26,8 +26,11 @@ class MicroAgent:
         self.agent_creator = agent_creator
         self.openai_wrapper = openai_wrapper
         self.evolve_count = 0  # Track how often the agent has evolved
+        self.number_of_code_executions = 0  # Track how often the agent has executed code
         self.current_status = None  # Track the current status of the agent
         self.active_agents = {}  # Track active agents in a tree view
+        self.last_input = ""
+        self.is_prime = is_prime
 
         # Initialize components used by the agent
         self.agent_evaluator = AgentEvaluator(self.openai_wrapper)
@@ -55,6 +58,7 @@ class MicroAgent:
         """
         Generate a response to the given input text.
         """
+        self.last_input = input_text
         try:
             self.update_status('Planning')
             response, conversation, solution, iterations = self.agent_responder.generate_response(

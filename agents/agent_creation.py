@@ -25,7 +25,7 @@ class AgentCreation:
         """
         prime_agent = MicroAgent(
             PRIME_PROMPT, PRIME_NAME, 0, self, 
-            self.openai_wrapper, PRIME_AGENT_WEIGHT, True
+            self.openai_wrapper, PRIME_AGENT_WEIGHT, True, True
         )
         self.agents.append(prime_agent)
 

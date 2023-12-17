@@ -1,7 +1,7 @@
 import logging
 from integrations.openaiwrapper import OpenAIAPIWrapper
 from prompt_management.prompts import (
-    REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT
+    REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT, STATIC_PRE_PROMPT_PRIME, REACT_STEP_PROMPT_PRIME, REACT_STEP_POST_PRIME
 )
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -39,19 +39,22 @@ class AgentResponse:
         return self._conclude_output(conversation_accumulator), conversation_accumulator, found_new_solution, thought_number
 
     def _compose_system_prompt(self, runtime_context, dynamic_prompt):
-        return STATIC_PRE_PROMPT + runtime_context + dynamic_prompt + "\nDELIVER THE NEXT PACKAGE."
+        pre_prompt = STATIC_PRE_PROMPT_PRIME if self.agent.is_prime else STATIC_PRE_PROMPT
+        return pre_prompt + runtime_context + dynamic_prompt + "\nDELIVER THE NEXT PACKAGE."
 
     def _generate_runtime_context(self, dynamic_prompt):
-        available_agents = [agent for agent in self.manager.agents if agent.purpose != "General"]
+        available_agents = [agent for agent in self.manager.agents if agent.purpose != "Bootstrap Agent"]
         available_agents_info = ', '.join([f"{agent.purpose} (depth={agent.depth})" for agent in available_agents])
-        return f"Your Purpose: {dynamic_prompt}. Available agents: {available_agents_info}."
+        return f"Your Purpose: {dynamic_prompt}. Available agents (Feel free to invent new ones if required!): {available_agents_info}."
 
     def _build_react_prompt(self, input_text, conversation_accumulator, thought_number, action_number):
+        thought_prompt = REACT_STEP_PROMPT_PRIME if self.agent.is_prime else REACT_STEP_PROMPT
+        action_prompt = REACT_STEP_POST_PRIME if self.agent.is_prime else REACT_STEP_POST
         return (
             f"Question: {input_text}\n"
             f"{conversation_accumulator}\n"
-            f"Thought {thought_number}: {REACT_STEP_PROMPT}\n"
-            f"Action {action_number}: {REACT_STEP_POST}"
+            f"Thought {thought_number}: {thought_prompt}\n"
+            f"Action {action_number}: {action_prompt}"
         )
 
     def _generate_chat_response(self, system_prompt, react_prompt):
@@ -70,6 +73,7 @@ class AgentResponse:
 
         if "```python" in response:
             self.agent.update_status('Executing Python code')
+            self.agent.number_of_code_executions += 1
             exec_response = self.code_execution.execute_external_code(response)
             conversation_accumulator += f"\nObservation: Executed Python code\nOutput: {exec_response}"
 
@@ -90,6 +94,7 @@ class AgentResponse:
 
     def _conclude_output(self, conversation):
         react_prompt = conversation
+        
         self.agent.update_status('Reviewing output')
         return self.openai_wrapper.chat_completion(
             model="gpt-4-1106-preview",

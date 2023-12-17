@@ -11,6 +11,8 @@ class CodeExecution:
     RESPONSE_PREVIEW_LENGTH = 600
 
     def __init__(self):
+        self.no_of_executions = 0
+        self.no_of_errors = 0
         pass
 
     def execute_external_code(self, text_with_code: str) -> str:

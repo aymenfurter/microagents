@@ -37,19 +37,20 @@ class AgentSimilarity:
 
     def calculate_similarity_threshold(self) -> float:
         """
-        Calculates the average similarity threshold across all agents.
+        Calculates the 98th percentile of the similarity threshold across all agents.
 
-        :return: Average similarity threshold.
+        :return: 98th percentile of similarity threshold.
         """
         try:
             embeddings = [self.get_embedding(agent.purpose) for agent in self.agents]
-            if len(embeddings) < 2:
+            if len(embeddings) < 250:
                 return 0.9
 
             similarities = [cosine_similarity([e1], [e2])[0][0] for i, e1 in enumerate(embeddings) for e2 in embeddings[i+1:]]
-            return np.mean(similarities) if similarities else 0.9
+            return np.percentile(similarities, 98) if similarities else 0.9
         except Exception as e:
             raise ValueError(f"Error calculating similarity threshold: {e}")
+
 
     def find_closest_agent(self, purpose_embedding: np.ndarray) -> Tuple[Optional[Agent], float]:
         """
