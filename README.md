@@ -3,7 +3,7 @@
 ![Self-Composing Agents](static/output.gif?raw=true)
 
 ## Overview
-This experiment explores self-evolving agents that automatically generate and improve themselves to answer a variety of questions. No specific agent design or prompting is required from the user. Simply pose a question, and the system initiates and evolves agents tailored to provide answers. Microagents are designed for reuse and can learn from past mistakes to enhance their future performance.
+This experiment explores self-evolving agents that automatically generate and improve themselves. No specific agent design or prompting is required from the user. Simply pose a question, and the system initiates and evolves agents tailored to provide answers. Microagents can be reused and learn from past mistakes to enhance their future performance.
 
 ## Generated Prompts from above Demo
 ```
@@ -36,6 +36,9 @@ get_population("CountryName")
 
 ```
 
+## How does it work?
+The process starts with a user query, activating a basic "bootstrap" agent, which doesn't execute Python code but plans and delegates to specialized agents capable of running Python for broader functions. An Agent Manager oversees them, selecting or creating agents via vector similarity for specific tasks. Agents have evolving system prompts that improve through learning. For coding tasks, agents include Python in prompts, refining their approach through an "evolution step" if unsuccessful. Upon completing a task, an agent's status updates, and the bootstrap agent evaluates the result, engaging other agents for further steps in larger processes.
+
 ## Current Challenges and Potential Improvements
 
 1. **Path Optimization**: The system sometimes fails to effectively discard non-functional evolutionary paths. Improving this mechanism is essential for more reliable results.
@@ -47,3 +50,5 @@ get_population("CountryName")
 4. **Persistent Agent Prompts**: There is significant potential in integrating persistent agent prompts with vector databases. Additionally, sharing successful agents across various runtime environments could improve overall efficiency.
 
 5. **Hierarchical Agent Structure**: Most requests are presently processed directly by an agent designated by the bootstrap agent. Implementing a more intricate hierarchical structure for managing requests could lead to major improvements.
+
+6. **Context Size Limitation**: Not yet considered.
