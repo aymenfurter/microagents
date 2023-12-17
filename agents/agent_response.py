@@ -1,6 +1,6 @@
 import logging
-from openaiwrapper import OpenAIAPIWrapper
-from prompts import REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT
+from integrations.openaiwrapper import OpenAIAPIWrapper
+from prompt_management.prompts import REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class AgentResponse:

@@ -1,8 +1,8 @@
 import os
-from microagent import MicroAgent
-from microagent_manager import MicroAgentManager
-from utility import get_env_variable, time_function
-from prompts import USER_INPUTS
+from agents.microagent import MicroAgent
+from agents.microagent_manager import MicroAgentManager
+from utils.utility import get_env_variable, time_function
+from prompt_management.prompts import USER_INPUTS
 from colorama import Fore, Style
 from terminaltables import AsciiTable
 

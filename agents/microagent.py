@@ -1,12 +1,12 @@
 import logging
-from openaiwrapper import OpenAIAPIWrapper
-from agent_evaluation import AgentEvaluation
-from agent_response import AgentResponse
-from agent_similarity import AgentSimilarity
-from code_execution import CodeExecution
-from prompt_evolution import PromptEvolution
-from response_extraction import ResponseExtraction
-from utility import get_env_variable, time_function, log_exception
+from integrations.openaiwrapper import OpenAIAPIWrapper
+from agents.agent_evaluation import AgentEvaluation
+from agents.agent_response import AgentResponse
+from agents.agent_similarity import AgentSimilarity
+from runtime.code_execution import CodeExecution
+from prompt_management.prompt_evolution import PromptEvolution
+from agents.response_extraction import ResponseExtraction
+from utils.utility import get_env_variable, time_function, log_exception
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

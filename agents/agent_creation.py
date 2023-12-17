@@ -1,7 +1,7 @@
-from microagent import MicroAgent
-from openaiwrapper import OpenAIAPIWrapper
-from agent_similarity import AgentSimilarity
-from prompts import PRIME_PROMPT, PRIME_NAME, PROMPT_ENGINEERING_SYSTEM_PROMPT, PROMPT_ENGINEERING_TEMPLATE, EXAMPLES
+from agents.microagent import MicroAgent
+from integrations.openaiwrapper import OpenAIAPIWrapper
+from agents.agent_similarity import AgentSimilarity
+from prompt_management.prompts import PRIME_PROMPT, PRIME_NAME, PROMPT_ENGINEERING_SYSTEM_PROMPT, PROMPT_ENGINEERING_TEMPLATE, EXAMPLES
 
 class AgentCreation:
     def __init__(self, openai_wrapper, max_agents=20):

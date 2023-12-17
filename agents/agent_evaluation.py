@@ -1,5 +1,5 @@
 import logging
-from openaiwrapper import OpenAIAPIWrapper
+from integrations.openaiwrapper import OpenAIAPIWrapper
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

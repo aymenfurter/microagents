@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from openaiwrapper import OpenAIAPIWrapper
+from integrations.openaiwrapper import OpenAIAPIWrapper
 
 class AgentSimilarity:
     def __init__(self, openai_wrapper, agents):

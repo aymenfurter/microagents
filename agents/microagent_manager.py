@@ -1,7 +1,7 @@
 import logging
-from agent_creation import AgentCreation
-from agent_similarity import AgentSimilarity
-from openaiwrapper import OpenAIAPIWrapper
+from agents.agent_creation import AgentCreation
+from agents.agent_similarity import AgentSimilarity
+from integrations.openaiwrapper import OpenAIAPIWrapper
 
 class MicroAgentManager:
     def __init__(self, api_key, max_agents=20):

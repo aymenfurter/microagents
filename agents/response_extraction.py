@@ -1,5 +1,5 @@
-from openaiwrapper import OpenAIAPIWrapper
-from prompts import STANDARD_SYSTEM_PROMPT, EXTRACTION_PROMPT_TEMPLATE
+from integrations.openaiwrapper import OpenAIAPIWrapper
+from prompt_management.prompts import STANDARD_SYSTEM_PROMPT, EXTRACTION_PROMPT_TEMPLATE
 
 class ResponseExtraction:
     def __init__(self, openai_wrapper):
