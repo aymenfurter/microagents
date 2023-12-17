@@ -1,19 +1,35 @@
 import logging
 from integrations.openaiwrapper import OpenAIAPIWrapper
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Basic logging setup
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
-class AgentEvaluation:
-    def __init__(self, openai_wrapper):
-        self.openai_wrapper = openai_wrapper
+# Constants
+MODEL_NAME = "gpt-4-1106-preview"
 
-    def evaluate_agent(self, input_text, prompt, output):
+class AgentEvaluator:
+    """
+    Evaluates AI agent's responses using OpenAI's GPT model.
+    """
+
+    def __init__(self, openai_wrapper: OpenAIAPIWrapper):
+        self.openai_api = openai_wrapper
+
+    def evaluate(self, input_text: str, prompt: str, output: str) -> str:
         """
-        Evaluates the performance of an agent based on given input, prompt, and output.
+        Returns evaluation of agent's output as 'Poor', 'Good', or 'Perfect'.
         """
-        evaluation_query = f"Evaluate the generated LLM Output: '{input_text}' with the current prompt '{prompt}' for quality and relevance (Possible Answers: Poor, Good, Perfect), LLM output with current prompt: '{output}'"
-        evaluation = self.openai_wrapper.chat_completion(
-            model="gpt-4-1106-preview",
-            messages=[{"role": "system", "content": evaluation_query}]
-        ).choices[0].message['content']
-        return evaluation
+        try:
+            query = ("Evaluate LLM Output: '{input}' with prompt '{prompt}' "
+                     "for quality/relevance. Possible Answers: Poor, Good, Perfect. "
+                     "LLM output: '{output}'").format(input=input_text, prompt=prompt, output=output)
+
+            result = self.openai_api.chat_completion(
+                model=MODEL_NAME,
+                messages=[{"role": "system", "content": query}]
+            )
+            return result.choices[0].essage['content']
+
+        except Exception as error:
+            logging.info(f"Agent evaluation error: {error}")
+            raise

@@ -2,7 +2,6 @@ from datetime import datetime
 
 current_datetime = datetime.now()
 
-
 EXAMPLES = [
     "Goal: Your purpose is to be able to write blog posts. Generated Prompt: You are an expert writer on the topic of blog posts.",
     "Goal: Your purpose is to count the words of the input. Generated Prompt: # You are a useful assistant that is able to count words. You can use the following code during execution to count word frequencies. Here is sample code, adopt as needed:```python\nfrom collections import Counter\n\n\nwords = text.split()\nword_counts = Counter(words)\nprint(word_counts)\n```.",

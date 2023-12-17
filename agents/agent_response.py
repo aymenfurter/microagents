@@ -1,73 +1,52 @@
 import logging
 from integrations.openaiwrapper import OpenAIAPIWrapper
-from prompt_management.prompts import REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from prompt_management.prompts import (
+    REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT
+)
+
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class AgentResponse:
-    def __init__(self, openai_wrapper, manager, code_execution, creator, depth):
+    def __init__(self, openai_wrapper, manager, code_execution, agent, creator, depth):
         self.openai_wrapper = openai_wrapper
         self.manager = manager
         self.code_execution = code_execution
+        self.agent = agent
         self.creator = creator
         self.depth = depth
 
     def generate_response(self, input_text, dynamic_prompt, max_depth):
-        runtime_context = self.generate_runtime_context(dynamic_prompt)
-        system_prompt = STATIC_PRE_PROMPT + runtime_context + dynamic_prompt + "\nDELIVER THE NEXT PACKAGE."
+        runtime_context = self._generate_runtime_context(dynamic_prompt)
+        system_prompt = self._compose_system_prompt(runtime_context, dynamic_prompt)
         conversation_accumulator = ""
         thought_number = 0
         action_number = 0
         found_new_solution = False
-        plan_step = True
 
+        for _ in range(max_depth):
+            react_prompt = self._build_react_prompt(input_text, conversation_accumulator, thought_number, action_number)
+            self.agent.update_status('Thinking .. (Iteration #' + str(thought_number) + ')')
+            response = self._generate_chat_response(system_prompt, react_prompt)
 
-        for iteration in range(max_depth):
-            react_prompt = self.build_react_prompt(input_text, conversation_accumulator, thought_number, action_number)
-
-            if plan_step:
-                react_prompt = react_prompt + REACT_PLAN_PROMPT
-                plan_step = False
-
-            response = self.openai_wrapper.chat_completion(
-                model="gpt-4-1106-preview",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": react_prompt}
-                ]
-            ).choices[0].message['content']
-
-            conversation_accumulator += f"\n{response}"
-            thought_number += 1
-            action_number += 1
-
-            if "```python" in response:
-                exec_response = self.code_execution.execute_external_code(response)
-                print(exec_response)
-                conversation_accumulator += f"\nObservation: Executed Python code\nOutput: {exec_response}"
-            
-            if "Use Agent[" in response:
-                agent_name = response.split('Use Agent[')[1].split(']')[0]
-                input_text = ""
-                if ":" in agent_name:
-                    input_text = agent_name.split(":")[1]
-                    agent_name = agent_name.split(":")[0]
-    
-                delegated_agent = self.creator.get_or_create_agent(agent_name, depth=self.depth + 1, sample_input=input_text)
-                delegated_response = delegated_agent.respond(input_text)
-                conversation_accumulator += f"\nOutput {thought_number}: Delegated task to Agent {agent_name}\nOutput of Agent: {action_number}: {delegated_response}"
+            conversation_accumulator, thought_number, action_number = self._process_response(
+                response, conversation_accumulator, thought_number, action_number, input_text
+            )
 
             if "Query Solved" in response:
                 found_new_solution = True
                 break
 
-        return self.conclude_output(conversation_accumulator), conversation_accumulator, found_new_solution, thought_number
+        return self._conclude_output(conversation_accumulator), conversation_accumulator, found_new_solution, thought_number
 
-    def generate_runtime_context(self, dynamic_prompt):
-        available_agents_arr = [agent for agent in self.manager.agents if agent.purpose != "General"]
-        available_agents_with_depth = ', '.join([f"{agent.purpose} (depth={agent.depth})" for agent in available_agents_arr])
-        return f"Your Purpose: {dynamic_prompt}. Available agents: {available_agents_with_depth}."
+    def _compose_system_prompt(self, runtime_context, dynamic_prompt):
+        return STATIC_PRE_PROMPT + runtime_context + dynamic_prompt + "\nDELIVER THE NEXT PACKAGE."
 
-    def build_react_prompt(self, input_text, conversation_accumulator, thought_number, action_number):
+    def _generate_runtime_context(self, dynamic_prompt):
+        available_agents = [agent for agent in self.manager.agents if agent.purpose != "General"]
+        available_agents_info = ', '.join([f"{agent.purpose} (depth={agent.depth})" for agent in available_agents])
+        return f"Your Purpose: {dynamic_prompt}. Available agents: {available_agents_info}."
+
+    def _build_react_prompt(self, input_text, conversation_accumulator, thought_number, action_number):
         return (
             f"Question: {input_text}\n"
             f"{conversation_accumulator}\n"
@@ -75,13 +54,47 @@ class AgentResponse:
             f"Action {action_number}: {REACT_STEP_POST}"
         )
 
-    def conclude_output(self, conversation):
+    def _generate_chat_response(self, system_prompt, react_prompt):
+        return self.openai_wrapper.chat_completion(
+            model="gpt-4-1106-preview",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": react_prompt}
+            ]
+        ).choices[0].message['content']
+
+    def _process_response(self, response, conversation_accumulator, thought_number, action_number, input_text):
+        conversation_accumulator += f"\n{response}"
+        thought_number += 1
+        action_number += 1
+
+        if "```python" in response:
+            self.agent.update_status('Executing Python code')
+            exec_response = self.code_execution.execute_external_code(response)
+            conversation_accumulator += f"\nObservation: Executed Python code\nOutput: {exec_response}"
+
+        if "Use Agent[" in response:
+            agent_name, input_text = self._parse_agent_info(response)
+            self.agent.update_active_agents(self.agent.purpose, agent_name)
+            self.agent.update_status('Waiting for Agent')
+            delegated_agent = self.creator.get_or_create_agent(agent_name, depth=self.depth + 1, sample_input=input_text)
+            delegated_response = delegated_agent.respond(input_text)
+            conversation_accumulator += f"\nOutput {thought_number}: Delegated task to Agent {agent_name}\nOutput of Agent: {action_number}: {delegated_response}"
+
+        return conversation_accumulator, thought_number, action_number
+
+    def _parse_agent_info(self, response):
+        agent_info = response.split('Use Agent[')[1].split(']')[0]
+        agent_name, input_text = (agent_info.split(":") + [""])[:2]
+        return agent_name.strip(), input_text.strip()
+
+    def _conclude_output(self, conversation):
         react_prompt = conversation
-        response = self.openai_wrapper.chat_completion(
+        self.agent.update_status('Reviewing output')
+        return self.openai_wrapper.chat_completion(
             model="gpt-4-1106-preview",
             messages=[
                 {"role": "system", "content": REACT_SYSTEM_PROMPT},
                 {"role": "user", "content": react_prompt}
             ]
         ).choices[0].message['content']
-        return response

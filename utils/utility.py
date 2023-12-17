@@ -1,33 +1,57 @@
 import os
 import time
 import logging
+from typing import Any, Callable, Optional, TypeVar
 
-def get_env_variable(var_name, default=None, raise_error=True):
-    """
-    Retrieves an environment variable. If not found, returns the default
-    value or raises an error based on the raise_error flag.
-    """
-    try:
-        return os.environ[var_name]
-    except KeyError:
-        if raise_error:
-            raise EnvironmentError(f"Error: {var_name} environment variable is not set.")
-        return default
+T = TypeVar("T", bound=Callable[..., Any])
 
-def time_function(func):
+DEFAULT_EXCEPTION_MESSAGE = "An error occurred"
+ENV_VAR_NOT_SET_MESSAGE = "environment variable is not set"
+
+def get_env_variable(var_name: str, default: Optional[str] = None, raise_error: bool = True) -> Optional[str]:
+    """
+    Retrieves an environment variable.
+
+    Args:
+        var_name (str): The name of the environment variable to retrieve.
+        default (Optional[str]): The default value to return if the variable is not found. Defaults to None.
+        raise_error (bool): Flag to indicate whether to raise an error if the variable is not found. Defaults to True.
+
+    Returns:
+        Optional[str]: The value of the environment variable or the default value.
+
+    Raises:
+        EnvironmentError: If raise_error is True and the environment variable is not set.
+    """
+    value = os.getenv(var_name)
+    if value is None and raise_error:
+        raise EnvironmentError(f"Error: {var_name} {ENV_VAR_NOT_SET_MESSAGE}.")
+    return value or default
+
+def time_function(func: T) -> T:
     """
     Decorator to measure the execution time of a function.
+
+    Args:
+        func (Callable): The function to measure.
+
+    Returns:
+        Callable: A wrapper function that adds execution time measurement to the input function.
     """
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
+    def wrapper(*args, **kwargs) -> Any:
+        start_time = time.perf_counter()
         result = func(*args, **kwargs)
-        end_time = time.time() - start_time
-        logging.info(f"Time taken by {func.__name__}: {end_time} seconds")
+        end_time = time.perf_counter() - start_time
+        logging.info(f"Time taken by {func.__name__}: {end_time:.6f} seconds")
         return result
     return wrapper
 
-def log_exception(e, message="An error occurred"):
+def log_exception(exception: Exception, message: str = DEFAULT_EXCEPTION_MESSAGE) -> None:
     """
     Logs exceptions with a custom message.
+
+    Args:
+        exception (Exception): The exception to log.
+        message (str): Custom message to prepend to the exception message. Defaults to a standard error message.
     """
-    logging.error(f"{message}: {str(e)}")
+    logging.error(f"{message}: {exception}")
