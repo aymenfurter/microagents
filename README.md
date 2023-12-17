@@ -43,7 +43,7 @@ The process starts with a user query, activating a basic "bootstrap" agent, whic
 
 ## Current Challenges and Potential Improvements
 
-1. **Path Optimization**: The system sometimes fails to effectively discard non-functional evolutionary paths. Improving this mechanism is essential for more reliable results.
+1. **Path Optimization**: The system sometimes fails to effectively discard non-functional agents.
 
 2. **Performance and Parallelization**: Currently, parallel processing is not implemented. Enabling the testing of multiple prompt evolutions simultaneously could significantly enhance performance.
 
