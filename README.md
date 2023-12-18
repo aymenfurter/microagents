@@ -1,4 +1,4 @@
-# Microagents: Modular Agents Capable of Self-Editing Their Prompts and Python code
+# microagents: Modular Agents Capable of Self-Editing Their Prompts and Python code
 
 <a href="https://raw.githubusercontent.com/aymenfurter/microagents/main/static/output.gif" target="_blank">
 <img src="https://raw.githubusercontent.com/aymenfurter/microagents/main/static/output.gif?raw=true"
