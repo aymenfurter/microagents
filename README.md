@@ -53,3 +53,21 @@ This experiment explores self-evolving agents that automatically generate and im
 5. **Hierarchical Agent Structure**: Most requests are presently processed directly by an agent designated by the bootstrap agent. Implementing a more intricate hierarchical structure for managing requests could lead to major improvements.
 
 6. **Context Size Limitation**: Not yet considered.
+
+### How to Run Microagents
+> [!WARNING]
+> Microagents are capable of directly executing Python code without a sandbox. Therefore, it is highly recommended to run them in isolated environments like GitHub Codespaces, where potential damage is limited. Be aware of the potential costs associated with the usage of OpenAI's services.
+
+#### Prerequisites
+- **OpenAI Account**: Ensure you have an OpenAI account with access to GPT-4 Turbo.
+#### Environment Setup
+- **Use of Confident Environments**: 
+
+#### Running the Agents
+1. **Clone the Repository**: Start by cloning the Microagents repository from GitHub.
+2. **Install Python Requirements**: Install the necessary Python requirements using `pip install -r requirements.txt`.
+3. **OpenAI API Key**: Set your OpenAI API key in an environment variable named `OPENAI_KEY`.
+4. **Execution**: Run the Microagents by executing `python main.py`.
+5. **Customize Scenarios**: You can update the tasks by modifying them at [prompts.py](https://github.com/aymenfurter/microagents/blob/main/prompt_management/prompts.py#L86). 
+
+
