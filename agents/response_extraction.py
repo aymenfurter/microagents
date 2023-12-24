@@ -47,8 +47,6 @@ class ResponseExtraction:
         ]
 
         return self.openai_wrapper.chat_completion(
-            #model="gpt-4",
-            #model="gpt-3.5-turbo",
             messages=messages,
             max_tokens=100,
         )
