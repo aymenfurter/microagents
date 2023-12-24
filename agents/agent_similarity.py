@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List, Tuple, Optional
 from sklearn.metrics.pairwise import cosine_similarity
-from integrations.openaiwrapper import OpenAIAPIWrapper 
+from integrations.openaiwrapper import OpenAIAPIWrapper
 
 class Agent:
     def __init__(self, purpose: str):

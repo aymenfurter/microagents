@@ -15,7 +15,7 @@ class MicroAgent:
     The MicroAgent class encapsulates the behavior of a small, purpose-driven agent
     that interacts with the OpenAI API.
     """
-    
+
     def __init__(self, initial_prompt, purpose, depth, agent_creator, openai_wrapper, max_depth=3, bootstrap_agent=False, is_prime=False):
         self.dynamic_prompt = initial_prompt
         self.purpose = purpose

@@ -11,7 +11,6 @@ from prompt_management.prompts import (
 
 DEFAULT_MAX_AGENTS = 20
 PRIME_AGENT_WEIGHT = 25
-MODEL_NAME = "gpt-4-1106-preview"
 
 class AgentCreation:
     def __init__(self, openai_wrapper: OpenAIAPIWrapper, max_agents: int = DEFAULT_MAX_AGENTS):
@@ -72,13 +71,9 @@ class AgentCreation:
             {"role": "system", "content": PROMPT_ENGINEERING_SYSTEM_PROMPT},
             {"role": "user", "content": PROMPT_ENGINEERING_TEMPLATE.format(goal=goal, sample_input=sample_input, examples=EXAMPLES)}
         ]
-        
+
         try:
-            response = self.openai_wrapper.chat_completion(
-                model=MODEL_NAME,
-                messages=messages
-            )
-            return response.choices[0].message['content'].strip()
+            return self.openai_wrapper.chat_completion(messages=messages)
         except Exception as e:
             print(f"Error generating LLM prompt: {e}")
             return ""

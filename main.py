@@ -115,4 +115,6 @@ def microagent_factory(initial_prompt, purpose, api_key, depth, max_depth, boots
     return MicroAgent(initial_prompt, purpose, api_key, depth, max_depth, bootstrap_agent)
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+    load_dotenv()
     main()
