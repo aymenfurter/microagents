@@ -57,8 +57,8 @@ class PromptEvolution:
 
     def _get_new_prompt(self, evolve_prompt_query: str, runtime_context: str) -> str:
         """Fetches a new prompt from the OpenAI API."""
-        response = self.openai_wrapper.chat_completion(
-            model="gpt-4-1106-preview",
+        return self.openai_wrapper.chat_completion(
+            #model="gpt-4-1106-preview",
+            #model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": evolve_prompt_query + runtime_context}]
         )
-        return response.choices[0].message['content'].strip()

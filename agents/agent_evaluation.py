@@ -5,7 +5,7 @@ from integrations.openaiwrapper import OpenAIAPIWrapper
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Constants
-MODEL_NAME = "gpt-4-1106-preview"
+#MODEL_NAME = "gpt-4-1106-preview"
 
 class AgentEvaluator:
     """
@@ -24,12 +24,9 @@ class AgentEvaluator:
                      "for quality/relevance. Possible Answers: Poor, Good, Perfect. "
                      "LLM output: '{output}'").format(input=input_text, prompt=prompt, output=output)
 
-            result = self.openai_api.chat_completion(
-                model=MODEL_NAME,
-                messages=[{"role": "system", "content": query}]
-            )
-            return result.choices[0].essage['content']
-
+            return self.openai_api.chat_completion(
+                     #model=MODEL_NAME,
+                     messages=[{"role": "system", "content": query}])
         except Exception as error:
             logging.info(f"Agent evaluation error: {error}")
             raise
