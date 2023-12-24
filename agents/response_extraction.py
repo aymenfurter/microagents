@@ -46,10 +46,9 @@ class ResponseExtraction:
             {"role": "user", "content": formatted_prompt}
         ]
 
-        extraction = self.openai_wrapper.chat_completion(
-            model="gpt-4",
+        return self.openai_wrapper.chat_completion(
+            #model="gpt-4",
+            #model="gpt-3.5-turbo",
             messages=messages,
             max_tokens=100,
         )
-
-        return extraction.choices[0].message['content'].strip()

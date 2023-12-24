@@ -73,11 +73,7 @@ class AgentCreation:
         ]
 
         try:
-            return self.openai_wrapper.chat_completion(
-                #model=MODEL_NAME,
-                #model="gpt-3.5-turbo",
-                messages=messages
-            )
+            return self.openai_wrapper.chat_completion(messages=messages)
         except Exception as e:
             print(f"Error generating LLM prompt: {e}")
             return ""

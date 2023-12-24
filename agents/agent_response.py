@@ -57,10 +57,7 @@ class AgentResponse:
         )
 
     def _generate_chat_response(self, system_prompt, react_prompt):
-        #model = os.getenv("OPENAI_EMBEDDING")
         return self.openai_wrapper.chat_completion(
-            #model=MODEL_EMBEDDING,
-            #model="gpt-4-1106-preview",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": react_prompt}
@@ -98,8 +95,6 @@ class AgentResponse:
 
         self.agent.update_status('Reviewing output')
         return self.openai_wrapper.chat_completion(
-            #model="gpt-4-1106-preview",
-            #model=MODEL_EMBEDDING,
             messages=[
                 {"role": "system", "content": REACT_SYSTEM_PROMPT},
                 {"role": "user", "content": react_prompt}
