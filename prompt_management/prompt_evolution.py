@@ -12,7 +12,7 @@ class PromptEvolution:
     def evolve_prompt(self, input_text: str, dynamic_prompt: str, output: str, full_conversation: str, new_solution: bool, depth: int) -> str:
         """
         Evolves the prompt based on feedback from the output and full conversation.
-        
+
         Args:
             input_text: The input text for the prompt.
             dynamic_prompt: The dynamic part of the prompt.
@@ -27,7 +27,7 @@ class PromptEvolution:
         full_conversation = self._truncate_conversation(full_conversation)
         runtime_context = self._generate_runtime_context(depth)
         evolve_prompt_query = self._build_evolve_prompt_query(dynamic_prompt, output, full_conversation, new_solution)
-        
+
         try:
             new_prompt = self._get_new_prompt(evolve_prompt_query, runtime_context)
         except Exception as e:
@@ -58,7 +58,5 @@ class PromptEvolution:
     def _get_new_prompt(self, evolve_prompt_query: str, runtime_context: str) -> str:
         """Fetches a new prompt from the OpenAI API."""
         return self.openai_wrapper.chat_completion(
-            #model="gpt-4-1106-preview",
-            #model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": evolve_prompt_query + runtime_context}]
         )
