@@ -52,10 +52,8 @@ COMMON_PROMPT_PART = (
 )
 
 TIME_DATE_PART = (
-""
-# remove current date and time so that long term caching will work...
-#    "Current Time: " + current_datetime.strftime("%H:%M:%S") + ". "
-#    "Current Date: " + current_datetime.strftime("%d/%m/%Y") + ". "
+    "Current Time: " + current_datetime.strftime("%H:%M:%S") + ". "
+    "Current Date: " + current_datetime.strftime("%d/%m/%Y") + ". "
 )
 
 AGENT_PART = (
