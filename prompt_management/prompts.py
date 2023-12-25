@@ -37,7 +37,7 @@ PROMPT_ENGINEERING_SYSTEM_PROMPT = "You are a helpful assistant knowledgeable in
 PRIME_PROMPT = "This is the prime agent. You are only allowed to call other agents. Prime Agent's prompt may not be changed"
 PRIME_NAME = "Bootstrap Agent"
 
-REACT_STEP_PROMPT = "[Decompose the task. Identify if another agent or Python code execution is needed. When writing code, print out any output you may to anaylze later. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\n"
+REACT_STEP_PROMPT = "[Decompose the task. Identify if another agent or Python code execution is needed. When writing code, print out any output you may to analyze later. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\n"
 REACT_STEP_POST = "[Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Paramter for agent]' for delegation or '```python\n# Python code here\n```' for execution]"
 REACT_STEP_PROMPT_PRIME = "[Decompose the task. Identify which agents are needed. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\n"
 REACT_STEP_POST_PRIME = "[Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Paramter for agent]' for delegation"
