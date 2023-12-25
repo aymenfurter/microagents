@@ -66,6 +66,5 @@ This experiment explores self-evolving agents that automatically generate and im
 2. **Install Python Requirements**: Install the necessary Python requirements using `pip install -r requirements.txt`.
 3. **OpenAI API Key**: Set your OpenAI API key in an environment variable named `OPENAI_KEY`.
 4. **Execution**: Run the Microagents by executing `python main.py`.
-5. **Customize Test Scenario**: You can update the tasks to be performed by modifying them at [prompts.py](https://github.com/aymenfurter/microagents/blob/main/prompt_management/prompts.py#L86). 
 
 
