@@ -47,3 +47,5 @@ coverage.xml
 *.cover
 *.py,cover
 .h
+
+*.db

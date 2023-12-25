@@ -77,15 +77,3 @@ STATIC_PRE_PROMPT = (
     "Write code to solve the task. You can only use the following frameworks: numpy, requests, pandas, requests, beautifulsoup4, matplotlib, seaborn, sqlalchemy, pymysql, scipy, scikit-learn, statsmodels, click, python-dotenv, virtualenv, scrapy, oauthlib, tweepy, datetime, openpyxl, xlrd, loguru, pytest, paramiko, cryptography, lxml" +
     AGENT_PART
 )
-
-USER_INPUTS_SINGLE = [
-    "What is the population of Thailand?",
-    "What is 5+9?",
-]
-
-USER_INPUTS = [
-    "What is 5+9?",
-    "What is the population of Thailand?",
-    "What is the population of Sweden?",
-    "What is the population of Sweden and Thailand combined?"
-]
