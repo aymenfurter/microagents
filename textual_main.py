@@ -58,12 +58,7 @@ class MicroAgentsApp(App):
         yield self.header
 
         yield self.table
-
-        #yield Rule()
-
         yield self.rlog
-        #yield Rule()
-
         yield self.statusbar
 
         self.footer=Footer()
