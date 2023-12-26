@@ -1,9 +1,4 @@
-import threading
-import time
-
 from rich.text import Text
-
-#from prompt_management.prompts import USER_INPUTS, USER_INPUTS_SINGLE
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -129,7 +124,6 @@ class MicroAgentsApp(App):
 
 
     def display_agent_info(self, table_data):
-        time.sleep(2)
         self.table.clear()
 
         if len(table_data) > 0:
@@ -158,7 +152,6 @@ class MicroAgentsApp(App):
 
 
         if not worker.is_cancelled:
-           time.sleep(1)
            self.call_from_thread(self.display_agent_info, table_data)
         else:
            self.statusbar.update("worker was cancelled")
