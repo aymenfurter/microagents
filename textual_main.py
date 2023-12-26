@@ -1,3 +1,4 @@
+import time
 from rich.text import Text
 
 from textual.app import App, ComposeResult
@@ -109,6 +110,7 @@ class MicroAgentsApp(App):
             response = self.process_user_input(user_input)
             output_text = format_text(question_number, user_input, response)
             if not worker.is_cancelled:
+               time.sleep(2)
                self.call_from_thread(self.rlog.write, output_text)
 
         self.process_input_done=True
@@ -119,6 +121,7 @@ class MicroAgentsApp(App):
 
 
     def display_agent_info(self, table_data):
+        time.sleep(2)
         self.table.clear()
 
         if len(table_data) > 0:
@@ -147,6 +150,7 @@ class MicroAgentsApp(App):
 
 
         if not worker.is_cancelled:
+           time.sleep(2)
            self.call_from_thread(self.display_agent_info, table_data)
         else:
            self.statusbar.update("worker was cancelled")
