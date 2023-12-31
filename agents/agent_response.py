@@ -4,7 +4,7 @@ from prompt_management.prompts import (
     REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT, STATIC_PRE_PROMPT_PRIME, REACT_STEP_PROMPT_PRIME, REACT_STEP_POST_PRIME
 )
 
-logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 class AgentResponse:
     def __init__(self, openai_wrapper, manager, code_execution, agent, creator, depth):
@@ -25,7 +25,7 @@ class AgentResponse:
 
         for _ in range(max_depth):
             react_prompt = self._build_react_prompt(input_text, conversation_accumulator, thought_number, action_number)
-            self.agent.update_status('Thinking .. (Iteration #' + str(thought_number) + ')')
+            self.agent.update_status(f"Thinking .. (Iteration \#{thought_number})")
             response = self._generate_chat_response(system_prompt, react_prompt)
             conversation_accumulator, thought_number, action_number = self._process_response(
                 response, conversation_accumulator, thought_number, action_number, input_text

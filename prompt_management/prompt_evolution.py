@@ -1,7 +1,7 @@
 import logging
 from integrations.openaiwrapper import OpenAIAPIWrapper
 
-logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 class PromptEvolution:
     def __init__(self, openai_wrapper: OpenAIAPIWrapper, manager):
@@ -31,7 +31,7 @@ class PromptEvolution:
         try:
             new_prompt = self._get_new_prompt(evolve_prompt_query, runtime_context)
         except Exception as e:
-            logging.error(f"Error evolving prompt: {e}")
+            logger.error(f"Error evolving prompt: {e}")
             new_prompt = dynamic_prompt
 
         return new_prompt

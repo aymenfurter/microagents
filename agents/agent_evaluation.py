@@ -2,7 +2,7 @@ import logging
 from integrations.openaiwrapper import OpenAIAPIWrapper
 
 # Basic logging setup
-logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 class AgentEvaluator:
     """
@@ -23,5 +23,5 @@ class AgentEvaluator:
 
             return self.openai_api.chat_completion(messages=[{"role": "system", "content": query}])
         except Exception as error:
-            logging.exception(f"Agent evaluation error: {error}")
+            logger.exception(f"Agent evaluation error: {error}")
             raise

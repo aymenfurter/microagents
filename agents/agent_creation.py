@@ -11,6 +11,8 @@ from prompt_management.prompts import (
     PROMPT_ENGINEERING_TEMPLATE, EXAMPLES
 )
 
+logger=logging.getLogger()
+
 DEFAULT_MAX_AGENTS = 20
 PRIME_AGENT_WEIGHT = 25
 
@@ -77,6 +79,6 @@ class AgentCreation:
         try:
             return self.openai_wrapper.chat_completion(messages=messages)
         except Exception as e:
-            logging.exception(f"Error generating LLM prompt: {e}")
+            logger.exception(f"Error generating LLM prompt: {e}")
             print(f"Error generating LLM prompt: {e}")
             return ""

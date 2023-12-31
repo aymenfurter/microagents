@@ -12,6 +12,10 @@ from agents.microagent_manager import MicroAgentManager
 from utils.utility import get_env_variable
 from utils.ui import format_text
 
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+
 # Constants
 """
 QUESTION_SET = [
@@ -26,10 +30,8 @@ class TextHandler(logging.Handler):
     """Class for  logging to a TextLog widget"""
 
     def __init__(self, textlog):
-        # run the regular Handler __init__
-        logging.Handler.__init__(self)
-        # Store a reference to the Text it will log to
         self.text = textlog
+        logging.Handler.__init__(self)
 
     def emit(self, record):
         msg = self.format(record)
@@ -71,7 +73,7 @@ class MicroAgentsApp(App):
     def __init__(self):
         self.table=DataTable(header_height=2, zebra_stripes=True, classes="table")
         self.rlog = RichLog(wrap=True, classes="rlog")
-        self.logger = RichLog(wrap=True)
+        self.logpanel = RichLog(wrap=True)
         self.statusbar=Static("Waiting for a question..", classes="statusbar")
         self.process_input_done=True
 
@@ -89,7 +91,7 @@ class MicroAgentsApp(App):
              with TabPane("Output", id="Output"):
                   yield self.rlog
              with TabPane("Logging"):
-                  yield self.logger
+                  yield self.logpanel
         yield Input(placeholder="Enter question here", classes="prompt")
         yield self.statusbar
 
@@ -97,14 +99,9 @@ class MicroAgentsApp(App):
         yield self.footer
 
     def on_ready(self):
-        logger = logging.getLogger("test")
-        logger.setLevel(logging.DEBUG)
-
-        th = TextHandler(self.logger)
+        th = TextHandler(self.logpanel)
         th.setLevel(logging.DEBUG)
         logger.addHandler(th)
-
-        logger.debug("This is where logging info will go")
 
     def on_mount(self) -> None:
         self.title="Microagents"
@@ -122,8 +119,6 @@ class MicroAgentsApp(App):
            self.statusbar.update("Waiting for a question..")
            self.manager = MicroAgentManager(api_key)
            self.manager.create_agents()
-           #self.run_worker(self.process_inputs, thread=True, exclusive=True, group="process_inputs")
-           #self.run_worker(self.get_agent_info, thread=True, group="display_agent_info")
 
     def action_toggle_dark(self) -> None:
         """ An action to toggle dark mode. """

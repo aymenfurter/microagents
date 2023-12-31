@@ -5,6 +5,8 @@ from typing import List, Tuple, Optional
 from sklearn.metrics.pairwise import cosine_similarity
 from integrations.openaiwrapper import OpenAIAPIWrapper
 
+logger = logging.getLogger()
+
 class Agent:
     def __init__(self, purpose: str):
         self.purpose = purpose
@@ -32,10 +34,10 @@ class AgentSimilarity:
             if 'data' in response and len(response['data']) > 0 and 'embedding' in response['data'][0]:
                 return np.array(response['data'][0]['embedding'])
             else:
-                logging.exception("Invalid response format")
+                logger.exception("Invalid response format")
                 raise ValueError("Invalid response format")
         except Exception as e:
-            logging.exception(f"Error retrieving embedding: {e}")
+            logger.exception(f"Error retrieving embedding: {e}")
             raise ValueError(f"Error retrieving embedding: {e}")
 
 
@@ -53,7 +55,7 @@ class AgentSimilarity:
             similarities = [cosine_similarity([e1], [e2])[0][0] for i, e1 in enumerate(embeddings) for e2 in embeddings[i+1:]]
             return np.percentile(similarities, 98) if similarities else 0.9
         except Exception as e:
-            logging.exception(f"Error calculating similarity threshold: {e}")
+            logger.exception(f"Error calculating similarity threshold: {e}")
             raise ValueError(f"Error calculating similarity threshold: {e}")
 
 
@@ -78,5 +80,5 @@ class AgentSimilarity:
 
             return closest_agent, highest_similarity
         except Exception as e:
-            logging.exception(f"Error finding closest agent: {e}")
+            logger.exception(f"Error finding closest agent: {e}")
             raise ValueError(f"Error finding closest agent: {e}")

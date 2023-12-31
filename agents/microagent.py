@@ -8,7 +8,7 @@ from prompt_management.prompt_evolution import PromptEvolution
 from agents.response_extraction import ResponseExtraction
 from utils.utility import get_env_variable, time_function, log_exception
 
-logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 class MicroAgent:
     """
@@ -43,7 +43,7 @@ class MicroAgent:
     def update_status(self, status):
         """Update the agent's current status."""
         self.current_status = status
-        logging.info(f"Agent {self.purpose} status updated to: {status}")
+        logger.info(f"Agent {self.purpose} status updated to: {status}")
 
     def update_active_agents(self, calling_agent, called_agent=None):
         """Update the tree view of active agents."""
@@ -51,7 +51,7 @@ class MicroAgent:
             self.active_agents[calling_agent] = called_agent
         else:
             self.active_agents.pop(calling_agent, None)
-        logging.info(f"Active agents updated: {self.active_agents}")
+        logger.info(f"Active agents updated: {self.active_agents}")
 
     @time_function
     def respond(self, input_text):
@@ -79,7 +79,7 @@ class MicroAgent:
             self.update_active_agents(self.purpose)
             return response
         except Exception as e:
-            log_exception(e)
+            logger.exception(f"{e}")
             self.update_status('Error')
             self.update_active_agents(self.purpose)
             return "An error occurred while generating the response."
