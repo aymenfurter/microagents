@@ -51,14 +51,14 @@ class OpenAIAPIWrapper:
             try:
                 return openai.Embedding.create(input=text, engine=ENGINE)
             except openai.error.OpenAIError as e:
-                logging.exception(f"OpenAI API error: {e}")
+                logging.error(f"OpenAI API error: {e}")
                 retries += 1
                 if retries >= MAX_RETRIES:
                     raise
                 time.sleep(RETRY_SLEEP_DURATION)
 
                 if f"{e}".startswith("Rate limit"):
-                   logging.debug("Rate limit reached...  sleeping for 20 seconds")
+                   print("Rate limit reached...  sleeping for 20 seconds")
                    start_time+=20
                    time.sleep(20)
         raise TimeoutError("API call timed out")
@@ -86,14 +86,14 @@ class OpenAIAPIWrapper:
                    return res['choices'][0].message['content'].strip()
                 return res.choices[0].message['content'].strip()
             except openai.error.OpenAIError as e:
-                logging.exception(f"OpenAI API error: {e}")
+                logging.error(f"OpenAI API error: {e}")
                 retries += 1
                 if retries >= MAX_RETRIES:
                     raise
                 time.sleep(RETRY_SLEEP_DURATION)
 
                 if f"{e}".startswith("Rate limit"):
-                   logging.debug("Rate limit reached...  sleeping for 20 seconds")
+                   print("Rate limit reached...  sleeping for 20 seconds")
                    start_time+=20
                    time.sleep(20)
         raise TimeoutError("API call timed out")
