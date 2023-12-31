@@ -32,7 +32,7 @@ class OpenAIAPIWrapper:
         self.api_key = api_key
         openai.api_key = api_key
         if API_BASE is not None:
-           logging.error("Accessing OPENAI at %s" % API_BASE)
+           logging.debug("Accessing OPENAI at %s" % API_BASE)
            openai.api_base = API_BASE
         self.timeout = timeout
 
