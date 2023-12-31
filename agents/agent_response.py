@@ -25,7 +25,7 @@ class AgentResponse:
 
         for _ in range(max_depth):
             react_prompt = self._build_react_prompt(input_text, conversation_accumulator, thought_number, action_number)
-            self.agent.update_status(f"Thinking .. (Iteration \#{thought_number})")
+            self.agent.update_status(f"Thinking .. (Iteration #{thought_number})")
             response = self._generate_chat_response(system_prompt, react_prompt)
             conversation_accumulator, thought_number, action_number = self._process_response(
                 response, conversation_accumulator, thought_number, action_number, input_text
