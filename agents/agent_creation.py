@@ -1,3 +1,5 @@
+import logging
+
 from typing import List, Optional
 
 from agents.microagent import MicroAgent
@@ -75,5 +77,6 @@ class AgentCreation:
         try:
             return self.openai_wrapper.chat_completion(messages=messages)
         except Exception as e:
+            logging.exception(f"Error generating LLM prompt: {e}")
             print(f"Error generating LLM prompt: {e}")
             return ""

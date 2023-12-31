@@ -1,4 +1,5 @@
 import logging
+
 from typing import List, Optional, Any
 from agents.agent_creation import AgentCreation
 from agents.agent_similarity import AgentSimilarity
@@ -34,6 +35,7 @@ class MicroAgentManager:
             self.agent_creator.create_prime_agent()
             self.logger.info("Agents created successfully.")
         except Exception as e:
+            logging.exception(f"Error in creating agents: {e}")
             self.logger.error(f"Error in creating agents: {e}")
             raise
 
@@ -47,6 +49,7 @@ class MicroAgentManager:
             self.logger.info(f"Agent for purpose '{purpose}' retrieved or created.")
             return agent
         except Exception as e:
+            logging.exception(f"Error in getting or creating agent: {e}")
             self.logger.error(f"Error in getting or creating agent: {e}")
             raise
 
@@ -62,6 +65,7 @@ class MicroAgentManager:
             self.logger.info(f"Closest agent for purpose '{purpose}' found.")
             return closest_agent
         except Exception as e:
+            logging.exception(f"Error in finding closest agent: {e}")
             self.logger.error(f"Error in finding closest agent: {e}")
             raise
 

@@ -1,10 +1,11 @@
 import time
-from rich.text import Text
+import logging
 
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import ScrollableContainer
-from textual.widgets import Footer, Header, Label, Static, DataTable, RichLog, Rule
+from textual.widgets import DataTable, Footer, Header, Input, Label, Static, RichLog, TabbedContent, TabPane
 from textual.worker import Worker, get_current_worker, WorkerState
 
 from agents.microagent_manager import MicroAgentManager
@@ -12,13 +13,29 @@ from utils.utility import get_env_variable
 from utils.ui import format_text
 
 # Constants
+"""
 QUESTION_SET = [
     "What is 5+9?",
     "What is the population of Thailand?",
     "What is the population of Sweden?",
     "What is the population of Sweden and Thailand combined?"
 ]
+"""
 
+class TextHandler(logging.Handler):
+    """Class for  logging to a TextLog widget"""
+
+    def __init__(self, textlog):
+        # run the regular Handler __init__
+        logging.Handler.__init__(self)
+        # Store a reference to the Text it will log to
+        self.text = textlog
+
+    def emit(self, record):
+        msg = self.format(record)
+        style = "red"
+        # style your output depending on e.g record.levelno here
+        self.text.write(Text(msg, style))
 
 class MicroAgentsApp(App):
     """ Main MicroAgents App Window """
@@ -32,13 +49,18 @@ class MicroAgentsApp(App):
         height: 5fr;
       }
 
-      .rlog {
+      .tabs {
         height: 10fr;
       }
 
       .statusbar {
         dock: bottom;
         border: white;
+      }
+
+      .prompt {
+        width: 100%;
+        border: yellow;
       }
     """
 
@@ -49,8 +71,11 @@ class MicroAgentsApp(App):
     def __init__(self):
         self.table=DataTable(header_height=2, zebra_stripes=True, classes="table")
         self.rlog = RichLog(wrap=True, classes="rlog")
-        self.statusbar=Static("Loading..", classes="statusbar")
+        self.logger = RichLog(wrap=True)
+        self.statusbar=Static("Waiting for a question..", classes="statusbar")
         self.process_input_done=True
+
+        self.agents_running=False
 
         App.__init__(self)
 
@@ -59,11 +84,27 @@ class MicroAgentsApp(App):
         yield self.header
 
         yield self.table
-        yield self.rlog
+ 
+        with TabbedContent(initial="Output", classes="tabs"):
+             with TabPane("Output", id="Output"):
+                  yield self.rlog
+             with TabPane("Logging"):
+                  yield self.logger
+        yield Input(placeholder="Enter question here", classes="prompt")
         yield self.statusbar
 
         self.footer=Footer()
         yield self.footer
+
+    def on_ready(self):
+        logger = logging.getLogger("test")
+        logger.setLevel(logging.DEBUG)
+
+        th = TextHandler(self.logger)
+        th.setLevel(logging.DEBUG)
+        logger.addHandler(th)
+
+        logger.debug("This is where logging info will go")
 
     def on_mount(self) -> None:
         self.title="Microagents"
@@ -76,23 +117,38 @@ class MicroAgentsApp(App):
 
         api_key = get_env_variable("OPENAI_KEY", raise_error=False)
         if not api_key:
-           self.statusbar.update("🚫 Error: OPENAI_KEY environment variable is not set." + Style.RESET_ALL)
+           self.statusbar.update("🚫 Error: OPENAI_KEY environment variable is not set.")
         else:
-           self.statusbar.update("Initializing..")
+           self.statusbar.update("Waiting for a question..")
            self.manager = MicroAgentManager(api_key)
            self.manager.create_agents()
-           self.run_worker(self.process_inputs, thread=True, exclusive=True, group="process_inputs")
-           self.run_worker(self.get_agent_info, thread=True, group="display_agent_info")
+           #self.run_worker(self.process_inputs, thread=True, exclusive=True, group="process_inputs")
+           #self.run_worker(self.get_agent_info, thread=True, group="display_agent_info")
 
     def action_toggle_dark(self) -> None:
         """ An action to toggle dark mode. """
         self.dark= not self.dark
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+
+        global QUESTION_SET
+        QUESTION_SET=[event.value,]
+
+        if not self.agents_running:
+           self.run_worker(self.get_agent_info, thread=True, group="display_agent_info")
+        self.statusbar.update(event.value)
+        self.run_worker(self.process_inputs, thread=True, exclusive=True, group="process_inputs")
+
+        self.statusbar.update("Waiting for a question1..")
 
     def process_user_input(self, user_input):
         """
         Processes a single user input and generates a response.
         """
         self.process_input_done=False
+        if not self.agents_running:
+           self.run_worker(self.get_agent_info, thread=True, group="display_agent_info")
+
         self.sub_title = user_input
         agent = self.manager.get_or_create_agent("Bootstrap Agent", depth=1, sample_input=user_input)
         return agent.respond(user_input)
@@ -104,6 +160,7 @@ class MicroAgentsApp(App):
               self.run_worker(self.get_agent_info, thread=True, group="display_agent_info")
 
     def process_inputs(self):
+        self.process_input_done=False
         worker = get_current_worker()
         self.statusbar.update("processing inputs..")
         for question_number, user_input in enumerate(QUESTION_SET, start=1):
@@ -130,6 +187,7 @@ class MicroAgentsApp(App):
                self.table.add_row(*styled_row)
 
     def get_agent_info(self) -> None:
+        self.agents_running=True
         self.statusbar.update("Running Agents...")
         worker = get_current_worker()
 

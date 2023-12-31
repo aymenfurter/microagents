@@ -23,5 +23,5 @@ class AgentEvaluator:
 
             return self.openai_api.chat_completion(messages=[{"role": "system", "content": query}])
         except Exception as error:
-            logging.info(f"Agent evaluation error: {error}")
+            logging.exception(f"Agent evaluation error: {error}")
             raise
