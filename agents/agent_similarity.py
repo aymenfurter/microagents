@@ -6,6 +6,7 @@ from integrations.openaiwrapper import OpenAIAPIWrapper
 class Agent:
     def __init__(self, purpose: str):
         self.purpose = purpose
+        self.embedding_purpose=None
 
 class AgentSimilarity:
     def __init__(self, openai_wrapper: OpenAIAPIWrapper, agents: List[Agent]):
@@ -42,7 +43,15 @@ class AgentSimilarity:
         :return: 98th percentile of similarity threshold.
         """
         try:
-            embeddings = [self.get_embedding(agent.purpose) for agent in self.agents]
+            embeddings=[]
+            for agent in self.agents:
+                if agent.embedding_purpose is None:
+                   agent.embedding_purpose = self.get_embedding(agent.purpose)
+                else:
+                   print("\nUsing embedding_purpose variable instead of api lookup")
+
+                embeddings.append(agent.embedding_purpose)
+
             if len(embeddings) < 250:
                 return 0.9
 
@@ -64,8 +73,12 @@ class AgentSimilarity:
 
         try:
             for agent in self.agents:
-                agent_embedding = self.get_embedding(agent.purpose)
-                similarity = cosine_similarity([agent_embedding], [purpose_embedding])[0][0]
+                if agent.embedding_purpose is None:
+                   agent.embedding_purpose = self.get_embedding(agent.purpose)
+                else:
+                   print("\nUsing embedding_purpose variable instead of api lookup")
+
+                similarity = cosine_similarity([agent.embedding_purpose], [purpose_embedding])[0][0]
 
                 if similarity > highest_similarity:
                     highest_similarity = similarity
