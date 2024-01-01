@@ -3,6 +3,8 @@ termcolor
 colorama
 terminaltables
 openai==0.28.1
+textual
+
 # Core Libraries
 numpy
 pandas

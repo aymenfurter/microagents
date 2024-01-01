@@ -3,6 +3,8 @@ import time
 import logging
 from typing import Any, Callable, Optional, TypeVar
 
+logger = logging.getLogger()
+
 T = TypeVar("T", bound=Callable[..., Any])
 
 DEFAULT_EXCEPTION_MESSAGE = "An error occurred"
@@ -42,7 +44,7 @@ def time_function(func: T) -> T:
         start_time = time.perf_counter()
         result = func(*args, **kwargs)
         end_time = time.perf_counter() - start_time
-        logging.info(f"Time taken by {func.__name__}: {end_time:.6f} seconds")
+        logger.info(f"Time taken by {func.__name__}: {end_time:.6f} seconds")
         return result
     return wrapper
 
@@ -54,4 +56,4 @@ def log_exception(exception: Exception, message: str = DEFAULT_EXCEPTION_MESSAGE
         exception (Exception): The exception to log.
         message (str): Custom message to prepend to the exception message. Defaults to a standard error message.
     """
-    logging.error(f"{message}: {exception}")
+    logger.error(f"{message}: {exception}")
