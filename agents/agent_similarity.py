@@ -47,8 +47,6 @@ class AgentSimilarity:
             for agent in self.agents:
                 if agent.embedding_purpose is None:
                    agent.embedding_purpose = self.get_embedding(agent.purpose)
-                else:
-                   print("\nUsing embedding_purpose variable instead of api lookup")
 
                 embeddings.append(agent.embedding_purpose)
 
@@ -75,8 +73,6 @@ class AgentSimilarity:
             for agent in self.agents:
                 if agent.embedding_purpose is None:
                    agent.embedding_purpose = self.get_embedding(agent.purpose)
-                else:
-                   print("\nUsing embedding_purpose variable instead of api lookup")
 
                 similarity = cosine_similarity([agent.embedding_purpose], [purpose_embedding])[0][0]
 
