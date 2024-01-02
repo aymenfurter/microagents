@@ -42,7 +42,7 @@ class HuggingFaceWrapper:
 
         while time.time() - start_time < self.timeout:
             try:
-                return self.embedding_model.encode(text)
+                return self.embedding_model.encode(text).tolist()
             except Exception as e:
                 logging.error(f"Huggin API error: {e}")
                 retries += 1
