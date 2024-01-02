@@ -65,6 +65,6 @@ This experiment explores self-evolving agents that automatically generate and im
 1. **Clone the Repository**: Start by cloning the Microagents repository from GitHub.
 2. **Install Python Requirements**: Install the necessary Python requirements using `pip install -r requirements.txt`.
 3. **OpenAI API Key**: Set your OpenAI API key in an environment variable named `OPENAI_KEY`.
-4. **Execution**: Run the Microagents by executing `python main.py`.
+4. **Execution**: For the demo, run `python main.py`. For an interactive chat experience, execute `python app.py`.
 
 
