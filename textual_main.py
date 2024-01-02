@@ -112,13 +112,9 @@ class MicroAgentsApp(App):
         for _label in _header:
             self.table.add_column(_label)
 
-        api_key = get_env_variable("OPENAI_KEY", raise_error=False)
-        if not api_key:
-           self.statusbar.update("🚫 Error: OPENAI_KEY environment variable is not set.")
-        else:
-           self.statusbar.update("Waiting for a question..")
-           self.manager = MicroAgentManager(api_key)
-           self.manager.create_agents()
+        self.statusbar.update("Waiting for a question..")
+        self.manager = MicroAgentManager()
+        self.manager.create_agents()
 
     def action_toggle_dark(self) -> None:
         """ An action to toggle dark mode. """

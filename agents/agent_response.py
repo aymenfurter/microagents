@@ -1,5 +1,6 @@
 import logging
 from integrations.openaiwrapper import OpenAIAPIWrapper
+from integrations.manager import LLM_Manager
 from prompt_management.prompts import (
     REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT, STATIC_PRE_PROMPT_PRIME, REACT_STEP_PROMPT_PRIME, REACT_STEP_POST_PRIME
 )
@@ -7,8 +8,8 @@ from prompt_management.prompts import (
 logger = logging.getLogger()
 
 class AgentResponse:
-    def __init__(self, openai_wrapper, manager, code_execution, agent, creator, depth):
-        self.openai_wrapper = openai_wrapper
+    def __init__(self, llm_manager, manager, code_execution, agent, creator, depth):
+        self.llm_manager = llm_manager
         self.manager = manager
         self.code_execution = code_execution
         self.agent = agent
@@ -57,7 +58,7 @@ class AgentResponse:
         )
 
     def _generate_chat_response(self, system_prompt, react_prompt):
-        return self.openai_wrapper.chat_completion(
+        return self.llm_manager.chat_completion(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": react_prompt}
@@ -94,7 +95,7 @@ class AgentResponse:
         react_prompt = conversation
 
         self.agent.update_status('Reviewing output')
-        return self.openai_wrapper.chat_completion(
+        return self.llm_manager.chat_completion(
             messages=[
                 {"role": "system", "content": REACT_SYSTEM_PROMPT},
                 {"role": "user", "content": react_prompt}

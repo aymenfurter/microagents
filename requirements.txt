@@ -2,8 +2,15 @@ prettytable
 termcolor
 colorama
 terminaltables
-openai==0.28.1
 textual
+
+# LLM libraries
+openai==0.28.1
+torch
+numpy
+transformers>=4.34
+accelerate
+sentence_transformers
 
 # Core Libraries
 numpy

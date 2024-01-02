@@ -11,11 +11,9 @@ MAX_RETRIES = 5
 from dotenv import load_dotenv
 load_dotenv()
 
+API_BASE = get_env_variable("OPENAI_API_BASE", None, False)
 ENGINE=get_env_variable("OPENAI_EMBEDDING", "text-embedding-ada-002", False)
 MODEL=get_env_variable("OPENAI_MODEL", "gpt-4-1106-preview", False)
-
-API_BASE = get_env_variable("OPENAI_API_BASE", None, False)
-
 
 class OpenAIAPIWrapper:
     """
@@ -36,7 +34,7 @@ class OpenAIAPIWrapper:
            openai.api_base = API_BASE
         self.timeout = timeout
 
-    @memoize_to_sqlite(func_name="get_embedding", filename="openai_embedding_cache.db")
+    #@memoize_to_sqlite(func_name="get_embedding", filename="openai_embedding_cache.db")
     def get_embedding(self, text):
         """
         Retrieves the embedding for the given text.
@@ -49,7 +47,11 @@ class OpenAIAPIWrapper:
 
         while time.time() - start_time < self.timeout:
             try:
-                return openai.Embedding.create(input=text, engine=ENGINE)
+                response=openai.Embedding.create(input=text, engine=ENGINE)
+                if 'data' in response and len(response['data']) > 0 and 'embedding' in response['data'][0]:
+                   return response['data'][0]['embedding']
+                else:
+                   raise Exception("invalid formatting of api response")
             except openai.error.OpenAIError as e:
                 logging.error(f"OpenAI API error: {e}")
                 retries += 1
