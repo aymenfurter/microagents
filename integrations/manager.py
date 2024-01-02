@@ -1,4 +1,3 @@
-
 from utils.utility import get_env_variable
 from .memoize import memoize_to_sqlite
 
@@ -21,16 +20,16 @@ class LLM_Manager:
         :param timeout: The timeout duration in seconds for API requests.
         """
         if LLM_SOURCE == "openai":
-           from .openaiwrapper import openaiwrapper
-           api_key=get_env_variable("OPENAI_API_KEY", None, True)
-           self.api=openaiwrapper(api_key, timeout=timeout)
+           from .openaiwrapper import OpenAIAPIWrapper
+           api_key=get_env_variable("OPENAI_KEY", None, True)
+           self.api=OpenAIAPIWrapper(api_key, timeout=timeout)
         elif LLM_SOURCE== "huggingface":
            from .huggingfacewrapper import HuggingFaceWrapper
            self.api=HuggingFaceWrapper(timeout)
         else:
            raise Exception("LLM_SOURCE environment variable needs to be set to openai or huggingface")
 
-    #@memoize_to_sqlite(func_name="get_embedding", filename=LLM_SOURCE+"_embedding_cache.db")
+    @memoize_to_sqlite(func_name="get_embedding", filename=LLM_SOURCE+"_embedding_cache.db")
     def get_embedding(self, text):
         """
         Retrieves the embedding for the given text.
