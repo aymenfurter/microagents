@@ -55,7 +55,7 @@ This experiment explores self-evolving agents that automatically generate and im
 6. **Context Size Limitation**: Not yet considered.
 
 ### How to Run Microagents
-> [!WARNING]
+> [!CAUTION]
 > Microagents are capable of directly executing Python code. There is currently no sandbox. Therefore, it is highly recommended to run them in isolated environments like GitHub Codespaces, where potential damage is limited. Be aware of the potential costs associated with the usage of OpenAI's services.
 
 #### Prerequisites

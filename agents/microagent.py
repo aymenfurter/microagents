@@ -20,6 +20,7 @@ class MicroAgent:
     def __init__(self, initial_prompt, purpose, depth, agent_creator, llm_manager, max_depth=3, bootstrap_agent=False, is_prime=False):
         self.dynamic_prompt = initial_prompt
         self.purpose = purpose
+        self.embedding_purpose = None
         self.depth = depth
         self.max_depth = max_depth
         self.usage_count = 0
