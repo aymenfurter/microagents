@@ -5,7 +5,7 @@ from colorama import Fore, Style
 
 from agents.microagent_manager import MicroAgentManager
 from utils.utility import get_env_variable, time_function
-from utils.ui import clear_console, display_agent_info, display_agent_info, print_final_output, format_text
+from ui.basic_ui import clear_console, display_agent_info, display_agent_info, print_final_output, format_text
 
 # Constants
 QUESTION_SET = [
