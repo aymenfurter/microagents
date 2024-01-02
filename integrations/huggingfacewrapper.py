@@ -9,7 +9,10 @@ import logging
 RETRY_SLEEP_DURATION = 1  # seconds
 MAX_RETRIES=5
 
-#from utils.utility import get_env_variable
+from utils.utility import get_env_variable
+
+EMBEDDING_MODEL=get_env_variable("EMBEDDING_MODEL", "all-MiniLM-L6-v2", False)
+CHAT_MODEL=get_env_variable("CHAT_MODEL", "TinyLlama/TinyLlama-1.1B-Chat-v1.0", False)
 
 class HuggingFaceWrapper:
     """
@@ -24,8 +27,8 @@ class HuggingFaceWrapper:
         :param timeout: The timeout duration in seconds for API requests.
         """
         self.timeout = timeout
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.chat_model_pipe = pipeline("text-generation", model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", torch_dtype=torch.bfloat16, device_map="auto")
+        self.embedding_model = SentenceTransformer(EMBEDDING_MODEL)
+        self.chat_model_pipe = pipeline("text-generation", model=CHAT_MODEL, torch_dtype=torch.bfloat16, device_map="auto")
 
     def get_embedding(self, text):
         """

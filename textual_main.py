@@ -9,7 +9,6 @@ from textual.widgets import DataTable, Footer, Header, Input, Label, Static, Ric
 from textual.worker import Worker, get_current_worker, WorkerState
 
 from agents.microagent_manager import MicroAgentManager
-from utils.utility import get_env_variable
 from utils.ui import format_text
 
 logger = logging.getLogger()

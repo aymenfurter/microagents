@@ -7,7 +7,7 @@ from agents.agent_similarity import AgentSimilarity
 from runtime.code_execution import CodeExecution
 from prompt_management.prompt_evolution import PromptEvolution
 from agents.response_extraction import ResponseExtraction
-from utils.utility import get_env_variable, time_function, log_exception
+from utils.utility import time_function
 
 logger = logging.getLogger()
 

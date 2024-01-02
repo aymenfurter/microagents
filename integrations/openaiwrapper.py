@@ -8,9 +8,6 @@ from .memoize import memoize_to_sqlite
 RETRY_SLEEP_DURATION = 1  # seconds
 MAX_RETRIES = 5
 
-from dotenv import load_dotenv
-load_dotenv()
-
 API_BASE = get_env_variable("OPENAI_API_BASE", None, False)
 ENGINE=get_env_variable("OPENAI_EMBEDDING", "text-embedding-ada-002", False)
 MODEL=get_env_variable("OPENAI_MODEL", "gpt-4-1106-preview", False)
