@@ -1,9 +1,9 @@
 import logging
-
 import numpy as np
 from typing import List, Tuple, Optional
 from sklearn.metrics.pairwise import cosine_similarity
-from integrations.openaiwrapper import OpenAIAPIWrapper
+
+from integrations.manager import LLM_Manager
 
 logger = logging.getLogger()
 
@@ -13,17 +13,17 @@ class Agent:
         self.embedding_purpose=None
 
 class AgentSimilarity:
-    def __init__(self, openai_wrapper: OpenAIAPIWrapper, agents: List[Agent]):
+    def __init__(self, llm_manager: LLM_Manager, agents: List[Agent]):
         """
         Initializes the AgentSimilarity object.
 
         :param openai_wrapper: Instance of OpenAIAPIWrapper to interact with OpenAI API.
         :param agents: List of Agent objects.
         """
-        self.openai_wrapper = openai_wrapper
+        self.llm_manager = llm_manager
         self.agents = agents
 
-    def get_embedding(self, text: str) -> np.ndarray:
+    def get_embedding(self, text: str):
         """
         Retrieves the embedding for a given text.
 
@@ -31,12 +31,7 @@ class AgentSimilarity:
         :return: Embedding as a numpy array.
         """
         try:
-            response = self.openai_wrapper.get_embedding(text)
-            if 'data' in response and len(response['data']) > 0 and 'embedding' in response['data'][0]:
-                return np.array(response['data'][0]['embedding'])
-            else:
-                logger.exception("Invalid response format")
-                raise ValueError("Invalid response format")
+            return self.llm_manager.get_embedding(text)
         except Exception as e:
             logger.exception(f"Error retrieving embedding: {e}")
             raise ValueError(f"Error retrieving embedding: {e}")

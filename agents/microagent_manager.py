@@ -3,7 +3,7 @@ import logging
 from typing import List, Optional, Any
 from agents.agent_creation import AgentCreation
 from agents.agent_similarity import AgentSimilarity
-from integrations.openaiwrapper import OpenAIAPIWrapper
+from integrations.manager import LLM_Manager
 
 logger= logging.getLogger()
 
@@ -12,11 +12,10 @@ class MicroAgentManager:
     Manages the creation and retrieval of micro agents.
     """
 
-    def __init__(self, api_key: str, max_agents: int = 20):
-        self.api_key = api_key
+    def __init__(self, max_agents: int = 20):
         self.max_agents = max_agents
-        self.openai_wrapper = OpenAIAPIWrapper(api_key)
-        self.agent_creator = AgentCreation(self.openai_wrapper, max_agents)
+        self.llm_manager = LLM_Manager()
+        self.agent_creator = AgentCreation(self.llm_manager, max_agents)
 
     def get_agents(self) -> List[Any]:
         """Returns the list of agents."""

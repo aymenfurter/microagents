@@ -1,12 +1,13 @@
 import logging
-from integrations.openaiwrapper import OpenAIAPIWrapper
+from integrations.manager import LLM_Manager
+
 from agents.agent_evaluation import AgentEvaluator
 from agents.agent_response import AgentResponse
 from agents.agent_similarity import AgentSimilarity
 from runtime.code_execution import CodeExecution
 from prompt_management.prompt_evolution import PromptEvolution
 from agents.response_extraction import ResponseExtraction
-from utils.utility import get_env_variable, time_function, log_exception
+from utils.utility import time_function
 
 logger = logging.getLogger()
 
@@ -16,7 +17,7 @@ class MicroAgent:
     that interacts with the OpenAI API.
     """
 
-    def __init__(self, initial_prompt, purpose, depth, agent_creator, openai_wrapper, max_depth=3, bootstrap_agent=False, is_prime=False):
+    def __init__(self, initial_prompt, purpose, depth, agent_creator, llm_manager, max_depth=3, bootstrap_agent=False, is_prime=False):
         self.dynamic_prompt = initial_prompt
         self.purpose = purpose
         self.embedding_purpose = None
@@ -25,7 +26,7 @@ class MicroAgent:
         self.usage_count = 0
         self.working_agent = bootstrap_agent
         self.agent_creator = agent_creator
-        self.openai_wrapper = openai_wrapper
+        self.llm_manager = llm_manager
         self.evolve_count = 0  # Track how often the agent has evolved
         self.number_of_code_executions = 0  # Track how often the agent has executed code
         self.current_status = None  # Track the current status of the agent
@@ -34,12 +35,12 @@ class MicroAgent:
         self.is_prime = is_prime
 
         # Initialize components used by the agent
-        self.agent_evaluator = AgentEvaluator(self.openai_wrapper)
+        self.agent_evaluator = AgentEvaluator(self.llm_manager)
         self.code_executor = CodeExecution()
-        self.agent_responder = AgentResponse(self.openai_wrapper, self.agent_creator, self.code_executor, self, agent_creator, depth)
-        self.agent_similarity = AgentSimilarity(self.openai_wrapper, self.agent_creator.agents)
-        self.prompt_evolver = PromptEvolution(self.openai_wrapper, self.agent_creator)
-        self.response_extractor = ResponseExtraction(self.openai_wrapper)
+        self.agent_responder = AgentResponse(self.llm_manager, self.agent_creator, self.code_executor, self, agent_creator, depth)
+        self.agent_similarity = AgentSimilarity(self.llm_manager, self.agent_creator.agents)
+        self.prompt_evolver = PromptEvolution(self.llm_manager, self.agent_creator)
+        self.response_extractor = ResponseExtraction(self.llm_manager)
 
     def update_status(self, status):
         """Update the agent's current status."""

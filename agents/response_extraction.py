@@ -1,4 +1,5 @@
-from integrations.openaiwrapper import OpenAIAPIWrapper
+from integrations.manager import LLM_Manager
+
 from prompt_management.prompts import STANDARD_SYSTEM_PROMPT, EXTRACTION_PROMPT_TEMPLATE
 
 class ResponseExtraction:
@@ -9,17 +10,17 @@ class ResponseExtraction:
         openai_wrapper (OpenAIAPIWrapper): An instance of the OpenAIAPIWrapper class.
     """
 
-    def __init__(self, openai_wrapper: OpenAIAPIWrapper):
+    def __init__(self, llm_manager: LLM_Manager):
         """
         Initializes the ResponseExtraction class with an OpenAIAPIWrapper instance.
 
         Args:
             openai_wrapper (OpenAIAPIWrapper): An instance of the OpenAIAPIWrapper class.
         """
-        if not isinstance(openai_wrapper, OpenAIAPIWrapper):
-            raise TypeError("openai_wrapper must be an instance of OpenAIAPIWrapper")
+        if not isinstance(llm_manager, LLM_Manager):
+            raise TypeError("llm_manager must be an instance of LLM_Manager")
 
-        self.openai_wrapper = openai_wrapper
+        self.llm_manager = llm_manager
 
     def extract_response_from_prompt(self, prompt: str, question: str) -> str:
         """
@@ -46,7 +47,4 @@ class ResponseExtraction:
             {"role": "user", "content": formatted_prompt}
         ]
 
-        return self.openai_wrapper.chat_completion(
-            messages=messages,
-            max_tokens=100,
-        )
+        return self.llm_manager.chat_completion(messages=messages, max_tokens=100)

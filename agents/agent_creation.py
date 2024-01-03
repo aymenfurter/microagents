@@ -3,7 +3,8 @@ import logging
 from typing import List, Optional
 
 from agents.microagent import MicroAgent
-from integrations.openaiwrapper import OpenAIAPIWrapper
+from integrations.manager import LLM_Manager
+
 from agents.agent_similarity import AgentSimilarity
 from prompt_management.prompts import (
     PRIME_PROMPT, PRIME_NAME, 
@@ -17,9 +18,9 @@ DEFAULT_MAX_AGENTS = 20
 PRIME_AGENT_WEIGHT = 25
 
 class AgentCreation:
-    def __init__(self, openai_wrapper: OpenAIAPIWrapper, max_agents: int = DEFAULT_MAX_AGENTS):
+    def __init__(self, llm_manager: LLM_Manager, max_agents: int = DEFAULT_MAX_AGENTS):
         self.agents: List[MicroAgent] = []
-        self.openai_wrapper = openai_wrapper
+        self.llm_manager = llm_manager
         self.max_agents = max_agents
 
     def create_prime_agent(self) -> None:
@@ -27,8 +28,8 @@ class AgentCreation:
         Creates the prime agent and adds it to the agent list.
         """
         prime_agent = MicroAgent(
-            PRIME_PROMPT, PRIME_NAME, 0, self, 
-            self.openai_wrapper, PRIME_AGENT_WEIGHT, True, True
+            PRIME_PROMPT, PRIME_NAME, 0, self,
+            self.llm_manager, PRIME_AGENT_WEIGHT, True, True
         )
         self.agents.append(prime_agent)
 
@@ -36,7 +37,7 @@ class AgentCreation:
         """
         Retrieves or creates an agent based on the given purpose.
         """
-        agent_similarity = AgentSimilarity(self.openai_wrapper, self.agents)
+        agent_similarity = AgentSimilarity(self.llm_manager, self.agents)
         purpose_embedding = agent_similarity.get_embedding(purpose)
         closest_agent, highest_similarity = agent_similarity.find_closest_agent(purpose_embedding)
         similarity_threshold = agent_similarity.calculate_similarity_threshold()
@@ -62,7 +63,7 @@ class AgentCreation:
         Creates a new agent.
         """
         prompt = self.generate_llm_prompt(purpose, sample_input)
-        new_agent = MicroAgent(prompt, purpose, depth, self, self.openai_wrapper)
+        new_agent = MicroAgent(prompt, purpose, depth, self, self.llm_manager)
         new_agent.usage_count = 1
         self.agents.append(new_agent)
         return new_agent
@@ -77,7 +78,7 @@ class AgentCreation:
         ]
 
         try:
-            return self.openai_wrapper.chat_completion(messages=messages)
+            return self.llm_manager.chat_completion(messages=messages)
         except Exception as e:
             logger.exception(f"Error generating LLM prompt: {e}")
             print(f"Error generating LLM prompt: {e}")
