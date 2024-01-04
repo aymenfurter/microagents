@@ -89,6 +89,5 @@ class MicroAgent:
         except Exception as e:
             logger.exception(f"{e}")
             self.update_status('💣 Error')
-            raise e
             self.update_active_agents(self.purpose)
             return "An error occurred while generating the response."
