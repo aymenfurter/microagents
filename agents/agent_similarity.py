@@ -10,7 +10,7 @@ logger = logging.getLogger()
 class Agent:
     def __init__(self, purpose: str):
         self.purpose = purpose
-        self.embedding_purpose=None
+        self.purpose_embedding=None
 
 class AgentSimilarity:
     def __init__(self, openai_wrapper: OpenAIAPIWrapper, agents: List[Agent]):
@@ -51,10 +51,10 @@ class AgentSimilarity:
         try:
             embeddings=[]
             for agent in self.agents:
-                if agent.embedding_purpose is None:
-                   agent.embedding_purpose = self.get_embedding(agent.purpose)
+                if agent.purpose_embedding is None:
+                   agent.purpose_embedding = self.get_embedding(agent.purpose)
 
-                embeddings.append(agent.embedding_purpose)
+                embeddings.append(agent.purpose_embedding)
 
             if len(embeddings) < 250:
                 return 0.9
@@ -78,10 +78,10 @@ class AgentSimilarity:
 
         try:
             for agent in self.agents:
-                if agent.embedding_purpose is None:
-                   agent.embedding_purpose = self.get_embedding(agent.purpose)
+                if agent.purpose_embedding is None:
+                   agent.purpose_embedding = self.get_embedding(agent.purpose)
 
-                similarity = cosine_similarity([agent.embedding_purpose], [purpose_embedding])[0][0]
+                similarity = cosine_similarity([agent.purpose_embedding], [purpose_embedding])[0][0]
 
                 if similarity > highest_similarity:
                     highest_similarity = similarity

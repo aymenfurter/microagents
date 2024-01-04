@@ -16,29 +16,29 @@ class MicroAgent:
     that interacts with the OpenAI API.
     """
 
-    def __init__(self, initial_prompt, purpose, depth, agent_creator, openai_wrapper, max_depth=3, bootstrap_agent=False, is_prime=False):
+    def __init__(self, initial_prompt, purpose, depth, agent_lifecycle, openai_wrapper, max_depth=3, bootstrap_agent=False, is_prime=False, purpose_embedding=None) :
         self.dynamic_prompt = initial_prompt
         self.purpose = purpose
-        self.embedding_purpose = None
+        self.purpose_embedding = purpose_embedding 
         self.depth = depth
         self.max_depth = max_depth
         self.usage_count = 0
         self.working_agent = bootstrap_agent
-        self.agent_creator = agent_creator
+        self.agent_lifecycle = agent_lifecycle
         self.openai_wrapper = openai_wrapper
-        self.evolve_count = 0  # Track how often the agent has evolved
-        self.number_of_code_executions = 0  # Track how often the agent has executed code
-        self.current_status = None  # Track the current status of the agent
-        self.active_agents = {}  # Track active agents in a tree view
+        self.evolve_count = 0
+        self.number_of_code_executions = 0 
+        self.current_status = None
+        self.active_agents = {} 
         self.last_input = ""
         self.is_prime = is_prime
 
         # Initialize components used by the agent
         self.agent_evaluator = AgentEvaluator(self.openai_wrapper)
         self.code_executor = CodeExecution()
-        self.agent_responder = AgentResponse(self.openai_wrapper, self.agent_creator, self.code_executor, self, agent_creator, depth)
-        self.agent_similarity = AgentSimilarity(self.openai_wrapper, self.agent_creator.agents)
-        self.prompt_evolver = PromptEvolution(self.openai_wrapper, self.agent_creator)
+        self.agent_responder = AgentResponse(self.openai_wrapper, self.agent_lifecycle, self.code_executor, self, agent_lifecycle, depth)
+        self.agent_similarity = AgentSimilarity(self.openai_wrapper, self.agent_lifecycle.agents)
+        self.prompt_evolver = PromptEvolution(self.openai_wrapper, self.agent_lifecycle)
         self.response_extractor = ResponseExtraction(self.openai_wrapper)
 
     def update_status(self, status):
@@ -54,6 +54,12 @@ class MicroAgent:
             self.active_agents.pop(calling_agent, None)
         logger.info(f"Active agents updated: {self.active_agents}")
 
+    def set_agent_as_working(self):
+        """Set the agent as a working agent."""
+        self.working_agent = True
+        self.agent_lifecycle.save_agent(self)
+        logger.info(f"Agent {self.purpose} set as working agent.")
+
     @time_function
     def respond(self, input_text):
         """
@@ -61,7 +67,7 @@ class MicroAgent:
         """
         self.last_input = input_text
         try:
-            self.update_status('Planning')
+            self.update_status('📝 Planning.. ')
             response, conversation, solution, iterations = self.agent_responder.generate_response(
                 input_text, self.dynamic_prompt, self.max_depth
             )
@@ -69,18 +75,24 @@ class MicroAgent:
             if not self.working_agent:
                 if iterations > 2:
                     self.evolve_count += 1
-                    self.update_status('Evolving prompt')
+                    self.update_status('🧬 Evolving..')
                     self.dynamic_prompt = self.prompt_evolver.evolve_prompt(
                         input_text, self.dynamic_prompt, response, conversation, solution, self.depth
                     )
-                elif solution: 
-                    self.working_agent = True
+                if solution: 
+                    self.set_agent_as_working()
 
-            self.update_status('Idle')
+            if not self.working_agent:
+                self.update_status('🕵️ Judging..')
+                agent_is_working = self.agent_evaluation.evaluate_agent(self, self.dynamic_prompt, input_text, response)  
+                if agent_is_working:
+                    self.set_agent_as_working()
+
+            self.update_status('😴 Sleeping.. ')
             self.update_active_agents(self.purpose)
             return response
         except Exception as e:
             logger.exception(f"{e}")
-            self.update_status('Error')
+            self.update_status('💣 Error')
             self.update_active_agents(self.purpose)
             return "An error occurred while generating the response."

@@ -5,6 +5,8 @@ from typing import List, Optional
 from agents.microagent import MicroAgent
 from integrations.openaiwrapper import OpenAIAPIWrapper
 from agents.agent_similarity import AgentSimilarity
+from agents.agent_persistence_manager import AgentPersistenceManager
+from numpy import ndarray
 from prompt_management.prompts import (
     PRIME_PROMPT, PRIME_NAME, 
     PROMPT_ENGINEERING_SYSTEM_PROMPT, 
@@ -16,10 +18,11 @@ logger=logging.getLogger()
 DEFAULT_MAX_AGENTS = 20
 PRIME_AGENT_WEIGHT = 25
 
-class AgentCreation:
-    def __init__(self, openai_wrapper: OpenAIAPIWrapper, max_agents: int = DEFAULT_MAX_AGENTS):
+class AgentLifecycle:
+    def __init__(self, openai_wrapper: OpenAIAPIWrapper, agent_persistance_manager: AgentPersistenceManager, max_agents: int = DEFAULT_MAX_AGENTS):
         self.agents: List[MicroAgent] = []
         self.openai_wrapper = openai_wrapper
+        self.agent_persistence = agent_persistance_manager
         self.max_agents = max_agents
 
     def create_prime_agent(self) -> None:
@@ -46,7 +49,7 @@ class AgentCreation:
             return closest_agent
 
         self.remove_least_used_agent_if_needed()
-        new_agent = self.create_new_agent(purpose, depth, sample_input)
+        new_agent = self.create_new_agent(purpose, depth, sample_input, purpose_embedding)
         return new_agent
 
     def remove_least_used_agent_if_needed(self) -> None:
@@ -57,15 +60,23 @@ class AgentCreation:
             self.agents.sort(key=lambda agent: agent.usage_count)
             self.agents.pop(0)
 
-    def create_new_agent(self, purpose: str, depth: int, sample_input: str) -> MicroAgent:
+    def create_new_agent(self, purpose: str, depth: int, sample_input: str, purpose_embedding: ndarray) -> MicroAgent:
         """
         Creates a new agent.
         """
         prompt = self.generate_llm_prompt(purpose, sample_input)
-        new_agent = MicroAgent(prompt, purpose, depth, self, self.openai_wrapper)
+        new_agent = MicroAgent(prompt, purpose, depth, self, self.openai_wrapper, purpose_embedding=purpose_embedding)
         new_agent.usage_count = 1
         self.agents.append(new_agent)
         return new_agent
+
+    def save_agent(self, agent) -> None:
+        """Saves the given agent."""
+        try:
+            self.agent_persistence.save_agent(agent)
+        except Exception as e:
+            logger.exception(f"Error in saving agent: {e}")
+            raise
 
     def generate_llm_prompt(self, goal: str, sample_input: str) -> str:
         """
