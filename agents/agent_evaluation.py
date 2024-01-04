@@ -19,9 +19,9 @@ class AgentEvaluator:
 
         try:
             formatted_prompt = AGENT_EVALUATION_PROMPT.format(input=input_text, prompt=prompt, output=output)
-            response = self.openai_api.chat_completion(messages=[{"role": "system", "content": query}])
+            response = self.openai_api.chat_completion(messages=[{"role": "system", "content": formatted_prompt}])
 
-            if response == "5" or response == "4":
+            if "5" in response or "4" in response:
                 return True
             else:
                 return False
