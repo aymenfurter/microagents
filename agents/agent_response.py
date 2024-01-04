@@ -15,6 +15,13 @@ class AgentResponse:
         self.creator = creator
         self.depth = depth
 
+    def number_to_emoji(self, number):
+        """Converts a number to an emoji."""
+        response = ""
+        for digit in str(number):
+            response += chr(0x1f1e6 + int(digit))
+        return response
+
     def generate_response(self, input_text, dynamic_prompt, max_depth):
         runtime_context = self._generate_runtime_context(dynamic_prompt)
         system_prompt = self._compose_system_prompt(runtime_context, dynamic_prompt)
@@ -25,7 +32,7 @@ class AgentResponse:
 
         for _ in range(max_depth):
             react_prompt = self._build_react_prompt(input_text, conversation_accumulator, thought_number, action_number)
-            self.agent.update_status(f"Thinking .. (Iteration #{thought_number})")
+            self.agent.update_status(f"🤔 (Iteration {thought_number})")
             response = self._generate_chat_response(system_prompt, react_prompt)
             conversation_accumulator, thought_number, action_number = self._process_response(
                 response, conversation_accumulator, thought_number, action_number, input_text
@@ -65,25 +72,50 @@ class AgentResponse:
         )
 
     def _process_response(self, response, conversation_accumulator, thought_number, action_number, input_text):
-        conversation_accumulator += f"\n{response}"
+        updated_accumulator = self._append_response_to_accumulator(conversation_accumulator, response)
         thought_number += 1
         action_number += 1
 
-        if "```python" in response:
-            self.agent.update_status('Executing Python code')
-            self.agent.number_of_code_executions += 1
-            exec_response = self.code_execution.execute_external_code(response)
-            conversation_accumulator += f"\nObservation: Executed Python code\nOutput: {exec_response}"
+        if self._is_python_code(response):
+            exec_response = self._execute_python_code(response)
+            updated_accumulator = self._append_execution_response(updated_accumulator, exec_response, thought_number)
 
-        if "Use Agent[" in response:
-            agent_name, input_text = self._parse_agent_info(response)
-            self.agent.update_active_agents(self.agent.purpose, agent_name)
-            self.agent.update_status('Waiting for Agent')
+        if self._is_agent_invocation(response):
+            agent_name, updated_input_text = self._parse_agent_info(response)
+            delegated_response, updated_accumulator = self._handle_agent_delegation(agent_name, updated_input_text, updated_accumulator, thought_number, action_number)
+            action_number += 1
+
+        return updated_accumulator, thought_number, action_number
+
+    def _append_response_to_accumulator(self, accumulator, response):
+        return accumulator + f"\n{response}"
+
+    def _is_python_code(self, response):
+        return "```python" in response
+
+    def _execute_python_code(self, response):
+        self.agent.update_status('👩‍💻 Coding..')
+        self.agent.number_of_code_executions += 1
+        return self.code_execution.execute_external_code(response)
+
+    def _append_execution_response(self, accumulator, exec_response, thought_number):
+        return accumulator + f"\nObservation: Executed Python code\nOutput: {exec_response}"
+
+    def _is_agent_invocation(self, response):
+        return "Use Agent[" in response
+
+    def _handle_agent_delegation(self, agent_name, input_text, accumulator, thought_number, action_number):
+        self.agent.update_active_agents(self.agent.purpose, agent_name)
+        self.agent.update_status('⏳ Waiting..')
+        if agent_name == self.agent.purpose:
+            accumulator += f"\nOutput {thought_number}: Unable to use Agent {agent_name}\nIt is not possible to call yourself!"
+            return "", accumulator
+        else:
             delegated_agent = self.creator.get_or_create_agent(agent_name, depth=self.depth + 1, sample_input=input_text)
             delegated_response = delegated_agent.respond(input_text)
-            conversation_accumulator += f"\nOutput {thought_number}: Delegated task to Agent {agent_name}\nOutput of Agent: {action_number}: {delegated_response}"
+            accumulator += f"\nOutput {thought_number}: Delegated task to Agent {agent_name}\nOutput of Agent {action_number}: {delegated_response}"
+            return delegated_response, accumulator
 
-        return conversation_accumulator, thought_number, action_number
 
     def _parse_agent_info(self, response):
         agent_info = response.split('Use Agent[')[1].split(']')[0]
@@ -93,7 +125,7 @@ class AgentResponse:
     def _conclude_output(self, conversation):
         react_prompt = conversation
 
-        self.agent.update_status('Reviewing output')
+        self.agent.update_status('👨‍🏫 Reviewing..')
         return self.openai_wrapper.chat_completion(
             messages=[
                 {"role": "system", "content": REACT_SYSTEM_PROMPT},

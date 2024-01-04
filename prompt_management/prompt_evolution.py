@@ -1,5 +1,6 @@
 import logging
 from integrations.openaiwrapper import OpenAIAPIWrapper
+from prompt_management.prompts import EVOLVE_PROMPT_QUERY
 
 logger = logging.getLogger()
 
@@ -50,10 +51,9 @@ class PromptEvolution:
 
     def _build_evolve_prompt_query(self, dynamic_prompt: str, output: str, full_conversation: str, new_solution: bool) -> str:
         """Builds the query for evolving the prompt."""
-        feedback_query = "How should the GPT-4 prompt evolve based on this input and feedback?"
-        if new_solution:
-            feedback_query += " Consider the solution provided in the full conversation section and make it reusable."
-        return f"{feedback_query} Current Prompt: {dynamic_prompt}, Full Conversation: {full_conversation}"
+        evolve_query = EVOLVE_PROMPT_QUERY.format(dynamic_prompt=dynamic_prompt, full_conversation=full_conversation)
+
+        return evolve_query 
 
     def _get_new_prompt(self, evolve_prompt_query: str, runtime_context: str) -> str:
         """Fetches a new prompt from the OpenAI API."""
