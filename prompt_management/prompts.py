@@ -61,9 +61,11 @@ AGENT_PART = (
     "Example: Use Agent[GetWeatherForLocation:Zurich] "
     "NEVER create an agent in this situation for User Agent[GetWeatherForZurich] !!! ALWAYS create one with Agent[GetWeather:Zurich] "
     "NEVER call an agent with the same purpose as yourself, if you call another agent you must break the task down. "
-    "A purpose MUST be reusable and generic. Use names as you would call microservices. "
-    "At depth=2, use agents only for tasks that are not well suited for your purpose. "
-    "Below depth=3, using other agents is NOT allowed. Agents must only use other agents below their depth "
+    "\nA purpose MUST be reusable and generic. Use names as you would call microservices. "
+    "\nAt depth=3, use agents only for tasks that are not well suited for your purpose. "
+    "\nIf you are for instance an agent called GetStockInformation, you must break down your tasks into smaller tasks and call other agents for that. Example: Use Agent[GetStockPriceInNasdaq]"
+    "\nOnly execute code if you are an agent with an actionable, concrete purpose. "
+    "Below depth=4, using other agents is NOT allowed. Agents must only use other agents below their depth "
 )
 
 STATIC_PRE_PROMPT_PRIME = (
@@ -80,9 +82,6 @@ STATIC_PRE_PROMPT = (
 
 AGENT_EVALUATION_PROMPT = (
         "Please rate the accuracy and completion of the task based on the following criteria.\n"
-        "System Prompt: '{prompt}'\n"
-        "Input: '{input}'\n"
-        "LLM Output: '{output}'\n\n"
         "Rating Scale:\n"
         "1 - The output is irrelevant or the code execution failed.\n"
         "2 - The output is partially relevant but significantly inaccurate or incomplete.\n"
@@ -94,23 +93,27 @@ AGENT_EVALUATION_PROMPT = (
         "- System Prompt: 'You are an export math expert, who can calculate any numbers quickly.'\n"
         "- Input: '5, 10'\n"
         "- LLM Output: The execution of the python code failed, however the correct answer is assumed to be 15.\n"
-        "- Rating: 1 - If an attempt is made to execute Python code, it must be successful; otherwise, the reliability of the result cannot be assured. \n\n"
+        "- Rating (1-5): 1 - If an attempt is made to execute Python code, it must be successful; otherwise, the reliability of the result cannot be assured. \n\n"
         "Example 2:\n"
         "- System Prompt: 'You are an agent specialized in converting temperature from Celsius to Fahrenheit.'\n"
         "- Input: '30 degrees, Celsius to Fahrenheit'\n"
         "- LLM Output: 'Following consultation with another agent, the provided response was 86 degrees Fahrenheit'\n"
-        "- Rating: 5\n\n"
+        "- Rating (1-5): 5\n\n"
         "Example 3:\n"
         "- System Prompt: 'You are an expert in Shakespeare.'\n"
         "- Input: 'Can you name some plays by Shakespeare?'\n"
         "- LLM Output: They for Sudden Joy Did Weep, The Wind and the Rain, Elton John - Can You Feel the Love Tonight \n"
-        "- Rating: 2 (partially complete, relevant but with noticeable incompleteness)\n\n"
+        "- Rating (1-5): 2 (partially complete, relevant but with noticeable incompleteness)\n\n"
         "Example 4:\n"
         "- System Prompt: 'You are an export math expert, who can calculate any numbers quickly.'\n"
         "- Input: '10, 15'\n"
         "- LLM Output: After successful execution of python code, the correct answer is 25.\n"
-        "- Rating: 5\n\n"
-        "Please select a rating between 1 and 5 based on these criteria and examples."
+        "- Rating (1-5): 5\n\n"
+        "Please select a rating between 1 and 5 based on these criteria and examples, ONLY PRINT THE NUMBER:"
+        "- System Prompt: '{prompt}'\n"
+        "- Input: '{input}'\n"
+        "- LLM Output: '{output}'\n\n"
+        "- Rating (1-5):"
     )
 
 EVOLVE_PROMPT_QUERY = (

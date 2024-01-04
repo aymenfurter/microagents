@@ -72,21 +72,16 @@ class MicroAgent:
                 input_text, self.dynamic_prompt, self.max_depth
             )
 
-            if not self.working_agent:
-                if iterations > 2:
-                    self.evolve_count += 1
-                    self.update_status('🧬 Evolving..')
-                    self.dynamic_prompt = self.prompt_evolver.evolve_prompt(
-                        input_text, self.dynamic_prompt, response, conversation, solution, self.depth
-                    )
-                if solution: 
+            if not self.working_agent and solution:
+                self.update_status('🕵️  Judging..')
+                if self.agent_evaluator.evaluate(input_text, self.dynamic_prompt, response):
                     self.set_agent_as_working()
-
-            if not self.working_agent:
-                self.update_status('🕵️ Judging..')
-                agent_is_working = self.agent_evaluation.evaluate_agent(self, self.dynamic_prompt, input_text, response)  
-                if agent_is_working:
-                    self.set_agent_as_working()
+            elif not self.working_agent:
+                self.evolve_count += 1
+                self.update_status('🧬 Evolving..')
+                self.dynamic_prompt = self.prompt_evolver.evolve_prompt(
+                    input_text, self.dynamic_prompt, response, conversation, solution, self.depth
+                )
 
             self.update_status('😴 Sleeping.. ')
             self.update_active_agents(self.purpose)

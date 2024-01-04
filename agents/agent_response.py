@@ -49,9 +49,10 @@ class AgentResponse:
         return pre_prompt + runtime_context + dynamic_prompt + "\nDELIVER THE NEXT PACKAGE."
 
     def _generate_runtime_context(self, dynamic_prompt):
-        available_agents = [agent for agent in self.manager.agents if agent.purpose != "Bootstrap Agent"]
+        available_agents = [agent for agent in self.manager.agents if agent.purpose != "Bootstrap Agent" and agent.working_agent]
         available_agents_info = ', '.join([f"{agent.purpose} (depth={agent.depth})" for agent in available_agents])
         return f"Your Purpose: {dynamic_prompt}. Available agents (Feel free to invent new ones if required!): {available_agents_info}."
+
 
     def _build_react_prompt(self, input_text, conversation_accumulator, thought_number, action_number):
         thought_prompt = REACT_STEP_PROMPT_PRIME if self.agent.is_prime else REACT_STEP_PROMPT
