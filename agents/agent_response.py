@@ -117,16 +117,17 @@ class AgentResponse:
             accumulator += f"\nOutput {thought_number}: Delegated task to Agent {agent_name}\nOutput of Agent {action_number}: {delegated_response}"
             return delegated_response, accumulator
 
-
     def _parse_agent_info(self, response):
         agent_info = response.split('Use Agent[')[1].split(']')[0]
-        agent_name, input_text = (agent_info.split(":") + [""])[:2]
-        return agent_name.strip(), input_text.strip()
+        split_info = agent_info.split(":", 1)
+        agent_name = split_info[0].strip()
+        input_text = split_info[1].strip() if len(split_info) > 1 else ""
+        return agent_name, input_text
 
     def _conclude_output(self, conversation):
         react_prompt = conversation
 
-        self.agent.update_status('👨‍🏫 Reviewing..')
+        self.agent.update_status('🧐 Reviewing..')
         return self.openai_wrapper.chat_completion(
             messages=[
                 {"role": "system", "content": REACT_SYSTEM_PROMPT},

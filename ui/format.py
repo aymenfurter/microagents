@@ -17,26 +17,27 @@ def display_agent_info(manager, stop_event, outputs):
         clear_console()
 
         header = [
-            "👤 Agent", 
-            "🔁 Evolve Count", 
-            "💻 Code Executions", 
-            "👥 Active Agents", 
-            "📈 Usage Count", 
-            "🌟 Depth", 
-            "Working?", 
-            "📝 Last Input", 
-            "🚦 Status"
+            "👤", 
+            "🔁", 
+            "💻", 
+            "📈", 
+            "🌟", 
+            "💡", 
+            "🕊️", 
+            "🚦"
         ]
 
         agents_data = [header]
         agents = manager.get_agents()
         for agent in agents:
             active_agents = ", ".join(f"{k}->{v}" for k, v in agent.active_agents.items())
+            # if active_agent is empty, set active_agent = agent.purpose
+            if not active_agents:
+                active_agents = agent.purpose
             agents_data.append([
-                agent.purpose, 
+                active_agents, 
                 agent.evolve_count, 
                 agent.number_of_code_executions,
-                active_agents,
                 agent.usage_count,
                 agent.depth,
                 "✅" if agent.working_agent else "❌",
@@ -51,6 +52,17 @@ def display_agent_info(manager, stop_event, outputs):
             print(output)
         print(f"\nAgents are running.. {next(animation)}\n", end='\r')  # '\r' returns the cursor to the start of the line
 
+        last_active_agent = None
+
+        for agent in agents: 
+            if agent.current_status and any(x in agent.current_status for x in ['Iteration', 'Evolving', 'Planning', 'Reviewing']):
+                last_active_agent = agent
+            
+        if (last_active_agent is not None):
+            print("\n\n🤖 \033[1m Last Active Agent:\033[0m \n")
+            print(Fore.CYAN + f"{last_active_agent.purpose} is {last_active_agent.current_status}.." + Style.RESET_ALL + "\n", end='\r')
+            print(Fore.CYAN + f"{last_active_agent.purpose} last input was: {last_active_agent.last_input}.." + Style.RESET_ALL + "\n", end='\r')
+            print(Fore.CYAN + f"{last_active_agent.purpose} last output was: {last_active_agent.last_output}.." + Style.RESET_ALL + "\n", end='\r')
         time.sleep(1)
 
 def print_final_output(outputs, manager):
