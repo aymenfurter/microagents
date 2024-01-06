@@ -37,12 +37,13 @@ PROMPT_ENGINEERING_SYSTEM_PROMPT = "You are a helpful assistant knowledgeable in
 PRIME_PROMPT = "This is the prime agent. You are only allowed to call other agents. Prime Agent's prompt may not be changed"
 PRIME_NAME = "Bootstrap Agent"
 
-REACT_STEP_PROMPT = "[Decompose the task. Identify if another agent or Python code execution is needed. When writing code, print out any output you may to analyze later. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\n"
+REACT_STEP_PROMPT = "Decompose the task. Turn abstract requests like 'find me pictures of a popular animal breed' to actionable tasks like Use Agent[FindWikimediaPhotos:British Short Hair Cat]. Identify if another agent or Python code execution is needed. When writing code, print out any output you may need to analyze later. Write 'Query Solved: <formulate detailed answer>' once the task is completed. For example, if the task is 'Assist me in exploring recent advancements in the field of biology', the steps would involve: 1. Use Agent[Current Date Agent:Retrieve Current Date] to get today's date. 2. Call Agent[arXiv Date Range Agent:Current Date='2024-01-06'] to calculate the date range of the past week. 3. Call Agent[arXiv Paper Fetching Agent:Date Range='2023-12-30,2024-01-06'] to fetch papers published in that week. 4. Call Agent[arXiv Popularity Scoring Agent:Paper IDs='list of paper ID'] for each paper to assess the popularity. 5. Finally, call Agent[arXiv Paper Details Agent:Sorted Paper IDs='sorted list of paper IDs'] to retrieve details of the most popular papers. Once all the information is gathered and analyzed, write 'Query Solved: [summarize the findings of the most popular papers with their details].'."
+#REACT_STEP_PROMPT = "[Decompose the task. Identify if another agent or Python code execution is needed. When writing code, print out any output you may to analyze later. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\n"
 REACT_STEP_POST = "[Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Paramter for agent]' for delegation or '```python\n# Python code here\n```' for execution]"
-REACT_STEP_PROMPT_PRIME = "[Decompose the task. Identify which agents are needed. Write 'Query Solved: <formulate detailed answer>' once the task is completed.]\n"
-REACT_STEP_POST_PRIME = "[Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Paramter for agent]' for delegation"
-REACT_PLAN_PROMPT = "\nThought: Before I start calling other agents or executing code, I need to compile a plan which agent(s) or code I need to run. I need to break down the task into smaller chunks (like microservices)"
-REACT_PLAN_PROMPT_PRIME = "\nThought: Before I start calling other agents, I need to compile a plan which agent(s) I need to run. I need to break down the task into smaller chunks (like microservices)"
+REACT_STEP_PROMPT_PRIME = "Decompose the task. Turn abstract requests like 'find me pictures of a popular animal breed' to actionable tasks like Use Agent[FindWikimediaPhotos:British Short Hair Cat]. Identify which agents are needed. Write 'Query Solved: <formulate detailed answer>' once the task is completed. For example, if the task is 'Assist me in exploring recent advancements in the field of biology', the steps would involve: 1. Call Agent[Current Date Agent:Retrieve Current Date] to get today's date. 2. Call Agent[arXiv Date Range Agent:Current Date='2024-01-06'] to calculate the date range of the past week. 3. Call Agent[arXiv Paper Fetching Agent:Date Range='2023-12-30,2024-01-06'] to fetch papers published in that week. 4. Call Agent[arXiv Popularity Scoring Agent:Paper IDs='list of paper ID'] for each paper to assess the popularity. 5. Finally, call Agent[arXiv Paper Details Agent:Sorted Paper IDs='sorted list of paper IDs'] to retrieve details of the most popular papers. Once all the information is gathered and analyzed, write 'Query Solved: [summarize the findings of the most popular papers with their details].'."
+REACT_STEP_POST_PRIME = "[Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Parameter for agent]' for delegation"
+REACT_PLAN_PROMPT = "\nThought: Before I start calling other agents or executing code, I need to compile a plan which agent(s) or code I need to run. I need to break down the task into smaller chunks (like microservices) & turn abstract requests like 'find me pictures of a popular animal breed' to actionable tasks like Use Agent[FindWikimediaPhotos:British Short Hair Cat]."
+REACT_PLAN_PROMPT_PRIME = "\nThought: Before I start calling other agents, I need to compile a plan which agent(s) I need to run. I need to break down the task into smaller chunks (like microservices) & turn abstract requests like 'find me pictures of a popular animal breed' to actionable tasks like Use Agent[FindWikimediaPhotos:British Short Hair Cat]."
 REACT_SYSTEM_PROMPT = "You will be given a ReAct based conversation. Summerize the outcome and give final conclusion"
 
 COMMON_PROMPT_PART = (
@@ -56,17 +57,31 @@ TIME_DATE_PART = (
     "Current Date: " + current_datetime.strftime("%d/%m/%Y") + ". "
 )
 
+
 AGENT_PART = (
-    "Agents are invoked using: 'Use Agent[Purpose of the agent as sentence:parameter]'. "
-    "Example: Use Agent[GetWeatherForLocation:Zurich] "
-    "NEVER create an agent in this situation for User Agent[GetWeatherForZurich] !!! ALWAYS create one with Agent[GetWeather:Zurich] "
-    "NEVER call an agent with the same purpose as yourself, if you call another agent you must break the task down. "
-    "\nA purpose MUST be reusable and generic. Use names as you would call microservices. "
-    "\nAt depth=3, use agents only for tasks that are not well suited for your purpose. "
-    "\nIf you are for instance an agent called GetStockInformation, you must break down your tasks into smaller tasks and call other agents for that. Example: Use Agent[GetStockPriceInNasdaq]"
-    "\nOnly execute code if you are an agent with an actionable, concrete purpose. "
-    "Below depth=4, using other agents is NOT allowed. Agents must only use other agents below their depth "
+    "Agents are invoked with the format: 'Use Agent[Purpose:Parameter]'. "
+    "This structure ensures clear task delegation and purpose definition. "
+    "\nAgents should not invoke another agent with the same purpose. To ensure task breakdown, "
+    "agents should call others only for sub-tasks outside their primary function. For example, "
+    "an agent named 'GetStockInformation' should delegate specific tasks like 'Use Agent[GetStockPrice:Nasdaq]'. "
+    "\nAgents at depth=3 should call other agents for tasks that are peripheral to their main purpose. "
+    "This promotes specialization and prevents task overlap. "
+    "\nBelow depth=4, agents should operate independently without invoking other agents. This ensures that deeper-level agents are focused and task-specific. "
+    "Agents must adhere to their depth constraints when using other agents, promoting a structured and efficient task delegation system."
+    "\n\nHere are some examples how work can be decomposed:\nExample 1: Assist me in exploring recent advancements in the field of biology:"
+    "\n- Current Date Agent: Retrieves the current date. E.g., Agent[Current Date Agent:Retrieve Current Date]."
+    "\n- arXiv Date Range Agent: Calculates the past 7-day date range from the current date. E.g., Agent[arXiv Date Range Agent:Current Date='2024-01-10']."
+    "\n- arXiv Paper Fetching Agent: Fetches papers published within the 7-day range. E.g., Agent[arXiv Paper Fetching Agent:Date Range='2024-01-03,2024-01-10']."
+    "\n- arXiv Popularity Scoring Agent: Assesses popularity of fetched papers. E.g., Agent[arXiv Popularity Scoring Agent:Paper IDs='list of paper IDs']."
+    "\n- arXiv Paper Details Agent: Retrieves details of popular papers. E.g., Agent[arXiv Paper Details Agent:Sorted Paper IDs='sorted list of paper IDs']."
+    "\nExample 2: Notifying availability CRT Monitor I can use for Retro Gaming:"
+    "\n- BVM Search Agent: Searches for 'Sony BVM-D20'. E.g., Agent[BVM Search Agent:Search Criteria='Sony BVM-D20']."
+    "\n- BVM Evaluation Agent: Evaluates listings based on criteria. E.g., Agent[BVM Evaluation Agent:Evaluate Listings]."
+    "\n- BVM Waiting Agent: Controls timing for search cycles. E.g., Agent[BVM Waiting Agent:Set Delay, Duration='time']."
+    "\n- BVM Notification Agent: Sends notifications for suitable listings. E.g., Agent[BVM Notification Agent:Send Notification, URL='http://x0r.sh/notifyme/sonybvm']."
+    "\n- BVM Data Logging Agent: Logs search and evaluation data. E.g., Agent[BVM Data Logging Agent:Store/Retrieve Data]."
 )
+
 
 STATIC_PRE_PROMPT_PRIME = (
     COMMON_PROMPT_PART + TIME_DATE_PART + AGENT_PART + "\n\nYou are not allowed to do math calculations yourself. You must use another agent for that."
@@ -81,7 +96,7 @@ STATIC_PRE_PROMPT = (
 )
 
 AGENT_EVALUATION_PROMPT = (
-        "Please rate the accuracy and completion of the task based on the following criteria.\n"
+        "Please rate the accuracy and completion of the task based on the following criteria. If the prompt contains values like YOUR_VALID_API_KEY, example.com, INSERT_YOUR_KEY, INSERT_YOUR_PASSWORD, you must always return 0.\n"
         "Rating Scale:\n"
         "1 - The output is irrelevant or the code execution failed.\n"
         "2 - The output is partially relevant but significantly inaccurate or incomplete.\n"
@@ -109,6 +124,11 @@ AGENT_EVALUATION_PROMPT = (
         "- Input: '10, 15'\n"
         "- LLM Output: After successful execution of python code, the correct answer is 25.\n"
         "- Rating (1-5): 5\n\n"
+        "Example 5:\n"
+        "- System Prompt: 'You are an export in crawling the weather.com. Use the following sample code: ```python weather_data = requests.get('https://api.weatherapi.com/v1/current.json?key=YOUR_API_KEY&q=LOCATION').json()'\n"
+        "- Input: 'Switzerland'\n"
+        "- LLM Output: The weather API could not be reached. Synthetic data was returned instead, 25°, sunny.\n"
+        "- Rating (1-5): 1\n\n"
         "Please select a rating between 1 and 5 based on these criteria and examples, ONLY PRINT THE NUMBER:"
         "- System Prompt: '{prompt}'\n"
         "- Input: '{input}'\n"
