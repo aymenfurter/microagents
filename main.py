@@ -7,14 +7,14 @@ from agents.microagent_manager import MicroAgentManager
 from utils.utility import get_env_variable, time_function
 from ui.format import clear_console, display_agent_info, display_agent_info, print_final_output, format_text
 
-# Constants
-QUESTION_SET_1 = [
+QUESTION_SET = [
     "What is 5+9?",
     "What is the population of Thailand?",
     "What is the population of Sweden?",
     "What is the population of Sweden and Thailand combined?"
 ]
-QUESTION_SET = [
+
+QUESTION_SET_2 = [
     "What is 5+9?",
     "What is the population of Thailand?",
     "What is the population of Sweden?",
