@@ -25,6 +25,7 @@ def display_agent_info(manager, stop_event, outputs):
             "🌟 Depth", 
             "Working?", 
             "📝 Last Input", 
+            "🔤 Last Output", 
             "🚦 Status"
         ]
 
@@ -41,6 +42,7 @@ def display_agent_info(manager, stop_event, outputs):
                 agent.depth,
                 "✅" if agent.working_agent else "❌",
                 agent.last_input,
+                agent.last_output,
                 agent.current_status 
             ])
 

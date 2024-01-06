@@ -10,6 +10,8 @@ from utils.utility import get_env_variable, time_function, log_exception
 
 logger = logging.getLogger()
 
+MAX_EVOLVE_COUNT = 5
+
 class MicroAgent:
     """
     The MicroAgent class encapsulates the behavior of a small, purpose-driven agent
@@ -31,6 +33,7 @@ class MicroAgent:
         self.current_status = None
         self.active_agents = {} 
         self.last_input = ""
+        self.last_output = ""
         self.is_prime = is_prime
 
         # Initialize components used by the agent
@@ -71,12 +74,13 @@ class MicroAgent:
             response, conversation, solution, iterations = self.agent_responder.generate_response(
                 input_text, self.dynamic_prompt, self.max_depth
             )
+            self.last_output = response[:150]
 
-            if not self.working_agent:
+            if not self.working_agent and solution or not self.working_agent and iterations == MAX_EVOLVE_COUNT:
                 self.update_status('🕵️  Judging..')
                 if self.agent_evaluator.evaluate(input_text, self.dynamic_prompt, response):
                     self.set_agent_as_working()
-            elif not self.working_agent and evolve_count < 5:
+            elif not self.working_agent and evolve_count < MAX_EVOLVE_COUNT:
                 self.evolve_count += 1
                 self.update_status('🧬 Evolving..')
                 self.dynamic_prompt = self.prompt_evolver.evolve_prompt(
@@ -86,6 +90,7 @@ class MicroAgent:
 
             self.update_status('😴 Sleeping.. ')
             self.update_active_agents(self.purpose)
+
             return response
         except Exception as e:
             logger.exception(f"{e}")
