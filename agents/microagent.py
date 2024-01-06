@@ -61,7 +61,7 @@ class MicroAgent:
         logger.info(f"Agent {self.purpose} set as working agent.")
 
     @time_function
-    def respond(self, input_text):
+    def respond(self, input_text, evolve_count=0):
         """
         Generate a response to the given input text.
         """
@@ -72,16 +72,17 @@ class MicroAgent:
                 input_text, self.dynamic_prompt, self.max_depth
             )
 
-            if not self.working_agent and solution:
+            if not self.working_agent:
                 self.update_status('🕵️  Judging..')
                 if self.agent_evaluator.evaluate(input_text, self.dynamic_prompt, response):
                     self.set_agent_as_working()
-            elif not self.working_agent:
+            elif not self.working_agent and evolve_count < 5:
                 self.evolve_count += 1
                 self.update_status('🧬 Evolving..')
                 self.dynamic_prompt = self.prompt_evolver.evolve_prompt(
                     input_text, self.dynamic_prompt, response, conversation, solution, self.depth
                 )
+                return self.respond(input_text, evolve_count + 1)
 
             self.update_status('😴 Sleeping.. ')
             self.update_active_agents(self.purpose)

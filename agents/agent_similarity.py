@@ -57,10 +57,10 @@ class AgentSimilarity:
                 embeddings.append(agent.purpose_embedding)
 
             if len(embeddings) < 250:
-                return 0.9
+                return 0.999
 
             similarities = [cosine_similarity([e1], [e2])[0][0] for i, e1 in enumerate(embeddings) for e2 in embeddings[i+1:]]
-            return np.percentile(similarities, 98) if similarities else 0.9
+            return np.percentile(similarities, 98) if similarities else 0.999
         except Exception as e:
             logger.exception(f"Error calculating similarity threshold: {e}")
             raise ValueError(f"Error calculating similarity threshold: {e}")
