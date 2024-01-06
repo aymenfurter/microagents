@@ -15,7 +15,6 @@ QUESTION_SET_1 = [
     "What is the population of Sweden and Thailand combined?"
 ]
 QUESTION_SET = [
-    "Buy me with as many paperclips as you can by the end of the day.",
     "What is 5+9?",
     "What is the population of Thailand?",
     "What is the population of Sweden?",
