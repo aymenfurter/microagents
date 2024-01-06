@@ -49,3 +49,4 @@ coverage.xml
 .h
 
 *.db
+!pretrained_agents.db
