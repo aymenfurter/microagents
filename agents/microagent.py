@@ -34,6 +34,7 @@ class MicroAgent:
         self.active_agents = {} 
         self.last_input = ""
         self.last_output = ""
+        self.last_conversation = ""
         self.is_prime = is_prime
 
         # Initialize components used by the agent
@@ -74,7 +75,8 @@ class MicroAgent:
             response, conversation, solution, iterations = self.agent_responder.generate_response(
                 input_text, self.dynamic_prompt, self.max_depth
             )
-            self.last_output = response[:150]
+            self.last_output = response
+            self.last_conversation = conversation
 
             if not self.working_agent and solution or not self.working_agent and iterations == MAX_EVOLVE_COUNT:
                 self.update_status('🕵️  Judging..')

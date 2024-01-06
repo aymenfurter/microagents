@@ -127,7 +127,7 @@ class AgentResponse:
     def _conclude_output(self, conversation):
         react_prompt = conversation
 
-        self.agent.update_status('👨‍🏫 Reviewing..')
+        self.agent.update_status('🧐 Reviewing..')
         return self.openai_wrapper.chat_completion(
             messages=[
                 {"role": "system", "content": REACT_SYSTEM_PROMPT},
