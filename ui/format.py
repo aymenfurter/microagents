@@ -23,7 +23,7 @@ def display_agent_info(manager, stop_event, outputs):
             "📈", 
             "🌟", 
             "💡", 
-            "🕊️", 
+            "💬", 
             "🚦"
         ]
 

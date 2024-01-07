@@ -3,10 +3,11 @@ from integrations.openaiwrapper import OpenAIAPIWrapper
 from agents.agent_evaluation import AgentEvaluator
 from agents.agent_response import AgentResponse
 from agents.agent_similarity import AgentSimilarity
-from runtime.code_execution import CodeExecution
-from prompt_management.prompt_evolution import PromptEvolution
 from agents.response_extraction import ResponseExtraction
 from agents.agent_stopped_exception import AgentStoppedException
+from agents.response_handler import ResponseHandler
+from runtime.code_execution import CodeExecution
+from prompt_management.prompt_evolution import PromptEvolution
 from utils.utility import get_env_variable, time_function, log_exception
 
 logger = logging.getLogger()
@@ -46,6 +47,7 @@ class MicroAgent:
         self.agent_similarity = AgentSimilarity(self.openai_wrapper, self.agent_lifecycle.agents)
         self.prompt_evolver = PromptEvolution(self.openai_wrapper, self.agent_lifecycle)
         self.response_extractor = ResponseExtraction(self.openai_wrapper)
+        self.response_handler = ResponseHandler(self)
 
     def update_status(self, status):
         """Update the agent's current status."""
@@ -82,42 +84,8 @@ class MicroAgent:
         if self.stopped:
             raise AgentStoppedException("Agent stopped.")
 
-    @time_function
     def respond(self, input_text, evolve_count=0):
         """
         Generate a response to the given input text.
         """
-        self.last_input = input_text
-        try:
-            self.update_status('📝 Planning.. ')
-            response, conversation, solution, iterations = self.agent_responder.generate_response(
-                input_text, self.dynamic_prompt, self.max_depth
-            )
-            self.last_output = response
-            self.last_conversation = conversation
-
-            if not self.working_agent and solution or not self.working_agent and iterations == MAX_EVOLVE_COUNT:
-                self.update_status('🕵️  Judging..')
-                if self.agent_evaluator.evaluate(input_text, self.dynamic_prompt, response):
-                    self.set_agent_as_working()
-            elif not self.working_agent and evolve_count < MAX_EVOLVE_COUNT:
-                self.evolve_count += 1
-                self.update_status('🧬 Evolving..')
-                self.dynamic_prompt = self.prompt_evolver.evolve_prompt(
-                    input_text, self.dynamic_prompt, response, conversation, solution, self.depth
-                )
-                return self.respond(input_text, evolve_count + 1)
-
-            self.update_status('😴 Sleeping.. ')
-            self.update_active_agents(self.purpose)
-
-            return response
-        except AgentStoppedException:
-            # FIXME: Not really happy with this solution, exceptions should be exceptional..
-            logger.info("Agent execution was stopped.")
-            return "Agent execution was stopped."
-        except Exception as e:
-            logger.exception(f"{e}")
-            self.update_status('💣 Error')
-            self.update_active_agents(self.purpose)
-            return "An error occurred while generating the response."
+        return self.response_handler.respond(input_text, evolve_count)
