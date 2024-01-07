@@ -1,0 +1,69 @@
+/* General Styling */
+body {
+    font-family: Arial, sans-serif;
+}
+
+/* Header and Footer Styles */
+header, footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+}
+
+/* Custom Styles for Agent Table */
+.agent-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.agent-table th, .agent-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.agent-table th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* Custom Styles for Logs Display */
+.logs-display {
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 10px;
+    height: 150px;
+    overflow-y: scroll;
+}
+
+/* Custom Styles for Agent Details */
+.agent-details {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+/* Custom Styles for Chat Interface */
+.chat-interface {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+/* Input and Button Styles */
+input[type="text"], button {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Responsive Columns */
+@media (max-width: 600px) {
+    .gr-row {
+        flex-direction: column;
+    }
+}

@@ -1,0 +1,64 @@
+import pandas as pd
+import gradio as gr
+from .utils import format_agent_data
+
+class AgentTable:
+    """
+    Component for displaying information about agents in a table format.
+    """
+    def __init__(self, agent_manager):
+        self.agent_manager = agent_manager
+
+    def display(self):
+        agents_info = self.agent_manager.get_agents_info()
+        headers = ["Agent", "Status", "Is Working", "Depth", "Evolve Count", "Executions", "Last Input"]
+        data = [ [agent[header] for header in headers] for agent in agents_info ]
+        dataframe = pd.DataFrame(data, columns=headers)
+        return gr.Dataframe(dataframe, interactive=False)
+    
+    def refresh(self):
+        """Method to refresh the agent data."""
+        return self.display()
+
+class LogsDisplay:
+    def __init__(self, log_handler):
+        self.log_handler = log_handler
+
+    def get_logs(self):
+        logs = self.log_handler.get_logs()
+        return "\n".join(logs)
+
+    def display(self):
+        return gr.TextArea(label="Logs", value="", interactive=False)
+
+class AgentDetails:
+    """
+    Component for displaying details of a selected agent.
+    """
+    def __init__(self, agent_manager):
+        self.agent_manager = agent_manager
+
+    def refresh(self):
+        """Method to refresh the agent data."""
+        return self.display()
+    
+    def display(self, selected_agent):
+        agent_details = self.agent_manager.get_agent_details(selected_agent)
+        formatted_details = format_agent_data(agent_details)
+        return gr.Markdown(formatted_details)
+
+class ChatInterface:
+    """
+    Component for handling chat functionality with agents.
+    """
+    def __init__(self, agent_manager):
+        self.agent_manager = agent_manager
+
+    def chat_function(self, message):
+        return self.agent_manager.process_user_input(message)
+
+    def display(self):
+        chat_input = gr.Textbox(label="Your Message")
+        chat_output = gr.Textbox(label="Chat Response")
+        chat_interface = gr.Interface(fn=self.chat_function, inputs=chat_input, outputs=chat_output)
+        return chat_interface
