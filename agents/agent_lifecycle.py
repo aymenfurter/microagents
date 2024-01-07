@@ -1,7 +1,5 @@
 import logging
-
-from typing import List, Optional
-
+from typing import List
 from agents.microagent import MicroAgent
 from integrations.openaiwrapper import OpenAIAPIWrapper
 from agents.agent_similarity import AgentSimilarity
@@ -13,28 +11,24 @@ from prompt_management.prompts import (
     PROMPT_ENGINEERING_TEMPLATE, EXAMPLES
 )
 
-logger=logging.getLogger()
+logger = logging.getLogger()
 
 DEFAULT_MAX_AGENTS = 20
 PRIME_AGENT_WEIGHT = 25
 
 class AgentLifecycle:
-    def __init__(self, openai_wrapper: OpenAIAPIWrapper, agent_persistance_manager: AgentPersistenceManager, max_agents: int = DEFAULT_MAX_AGENTS):
+    def __init__(self, openai_wrapper: OpenAIAPIWrapper, agent_persistence_manager: AgentPersistenceManager, max_agents: int = DEFAULT_MAX_AGENTS):
         self.agents: List[MicroAgent] = []
         self.openai_wrapper = openai_wrapper
-        self.agent_persistence = agent_persistance_manager
+        self.agent_persistence = agent_persistence_manager
         self.max_agents = max_agents
 
     def cleanup_agents(self):
-        """Remove all agents with status stopped = True"""
-        for agent in self.agents:
-            if agent.stopped:
-                self.agents.remove(agent)
-    
+        """Remove all agents with status stopped = True in an efficient manner."""
+        self.agents = [agent for agent in self.agents if not agent.stopped]
+
     def create_prime_agent(self) -> None:
-        """
-        Creates the prime agent and adds it to the agent list.
-        """
+        """Creates the prime agent and adds it to the agent list."""
         prime_agent = MicroAgent(
             PRIME_PROMPT, PRIME_NAME, 0, self, 
             self.openai_wrapper, PRIME_AGENT_WEIGHT, True, True
@@ -56,37 +50,32 @@ class AgentLifecycle:
                 closest_agent.usage_count += 1
                 return closest_agent
 
-        self.remove_least_used_agent_if_needed()
-        new_agent = self.create_new_agent(purpose, depth, sample_input, None)  # Purpose embedding is not required if creating a new agent
-        return new_agent
+        return self._create_and_add_agent(purpose, depth, sample_input)
 
-    def remove_least_used_agent_if_needed(self) -> None:
-        """
-        Removes the least used agent if the maximum number of agents is exceeded.
-        """
+    def _create_and_add_agent(self, purpose: str, depth: int, sample_input: str) -> MicroAgent:
+        """Helper method to create and add a new agent."""
         if len(self.agents) >= self.max_agents:
-            self.agents.sort(key=lambda agent: agent.usage_count)
-            self.agents.pop(0)
+            self._remove_least_used_agent()
 
-    def create_new_agent(self, purpose: str, depth: int, sample_input: str, purpose_embedding: ndarray) -> MicroAgent:
-        """
-        Creates a new agent.
-        """
-        prompt = self.generate_llm_prompt(purpose, sample_input)
-        new_agent = MicroAgent(prompt, purpose, depth, self, self.openai_wrapper, purpose_embedding=purpose_embedding)
+        new_agent = MicroAgent(self._generate_llm_prompt(purpose, sample_input), purpose, depth, self, self.openai_wrapper)
         new_agent.usage_count = 1
         self.agents.append(new_agent)
         return new_agent
 
-    def save_agent(self, agent) -> None:
-        """Saves the given agent."""
+    def _remove_least_used_agent(self):
+        """Removes the least used agent."""
+        least_used_agent = min(self.agents, key=lambda agent: agent.usage_count)
+        self.agents.remove(least_used_agent)
+
+    def save_agent(self, agent: MicroAgent) -> None:
+        """Saves the given agent with error handling."""
         try:
             self.agent_persistence.save_agent(agent)
         except Exception as e:
             logger.exception(f"Error in saving agent: {e}")
             raise
 
-    def generate_llm_prompt(self, goal: str, sample_input: str) -> str:
+    def _generate_llm_prompt(self, goal: str, sample_input: str) -> str:
         """
         Generates a prompt for the LLM based on the given goal and sample input.
         """
@@ -99,5 +88,4 @@ class AgentLifecycle:
             return self.openai_wrapper.chat_completion(messages=messages)
         except Exception as e:
             logger.exception(f"Error generating LLM prompt: {e}")
-            print(f"Error generating LLM prompt: {e}")
             return ""
