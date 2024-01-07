@@ -12,7 +12,6 @@ from utils.utility import get_env_variable, time_function, log_exception
 
 logger = logging.getLogger()
 
-MAX_EVOLVE_COUNT = 3
 
 class MicroAgent:
     """

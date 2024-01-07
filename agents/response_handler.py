@@ -4,14 +4,15 @@ from utils.utility import time_function
 
 logger = logging.getLogger()
 
+MAX_EVOLVE_COUNT = 3
+
 class ResponseHandler:
     """
     ResponseHandler is responsible for handling the response generation logic for MicroAgent.
     """
 
-    def __init__(self, micro_agent, max_evolve_count=3):
+    def __init__(self, micro_agent):
         self.micro_agent = micro_agent
-        self.MAX_EVOLVE_COUNT = max_evolve_count
 
     @time_function
     def respond(self, input_text, evolve_count=0):
@@ -27,11 +28,11 @@ class ResponseHandler:
             self.micro_agent.last_output = response
             self.micro_agent.last_conversation = conversation
 
-            if not self.micro_agent.working_agent and (solution or iterations == self.MAX_EVOLVE_COUNT):
+            if not self.micro_agent.working_agent and (solution or evolve_count == MAX_EVOLVE_COUNT):
                 self.micro_agent.update_status('🕵️  Judging..')
                 if self.micro_agent.agent_evaluator.evaluate(input_text, self.micro_agent.dynamic_prompt, response):
                     self.micro_agent.set_agent_as_working()
-            elif not self.micro_agent.working_agent and evolve_count < self.MAX_EVOLVE_COUNT:
+            elif not self.micro_agent.working_agent and evolve_count < MAX_EVOLVE_COUNT:
                 self.micro_agent.evolve_count += 1
                 self.micro_agent.update_status('🧬 Evolving..')
                 self.micro_agent.dynamic_prompt = self.micro_agent.prompt_evolver.evolve_prompt(
