@@ -6,11 +6,12 @@ from agents.agent_similarity import AgentSimilarity
 from runtime.code_execution import CodeExecution
 from prompt_management.prompt_evolution import PromptEvolution
 from agents.response_extraction import ResponseExtraction
+from agents.agent_stopped_exception import AgentStoppedException
 from utils.utility import get_env_variable, time_function, log_exception
 
 logger = logging.getLogger()
 
-MAX_EVOLVE_COUNT = 5
+MAX_EVOLVE_COUNT = 3
 
 class MicroAgent:
     """
@@ -35,6 +36,7 @@ class MicroAgent:
         self.last_input = ""
         self.last_output = ""
         self.last_conversation = ""
+        self.stopped = False
         self.is_prime = is_prime
 
         # Initialize components used by the agent
@@ -47,6 +49,7 @@ class MicroAgent:
 
     def update_status(self, status):
         """Update the agent's current status."""
+        self.check_for_stopped()
         self.current_status = status
         logger.info(f"Agent {self.purpose} status updated to: {status}")
 
@@ -63,6 +66,21 @@ class MicroAgent:
         self.working_agent = True
         self.agent_lifecycle.save_agent(self)
         logger.info(f"Agent {self.purpose} set as working agent.")
+
+    def is_working_agent(self):
+        return self.working_agent
+
+    def set_agent_deleted(self): 
+        """Set the agent as deleted."""
+        self.working_agent = False
+        self.current_status = "❌ Deleted"
+        self.stopped = True
+        logger.info(f"Agent {self.purpose} set as deleted.")
+
+    def check_for_stopped(self):
+        """Check if the agent has been stopped."""
+        if self.stopped:
+            raise AgentStoppedException("Agent stopped.")
 
     @time_function
     def respond(self, input_text, evolve_count=0):
@@ -94,6 +112,10 @@ class MicroAgent:
             self.update_active_agents(self.purpose)
 
             return response
+        except AgentStoppedException:
+            # FIXME: Not really happy with this solution, exceptions should be exceptional..
+            logger.info("Agent execution was stopped.")
+            return "Agent execution was stopped."
         except Exception as e:
             logger.exception(f"{e}")
             self.update_status('💣 Error')

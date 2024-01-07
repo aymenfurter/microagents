@@ -52,17 +52,6 @@ def display_agent_info(manager, stop_event, outputs):
             print(output)
         print(f"\nAgents are running.. {next(animation)}\n", end='\r')  # '\r' returns the cursor to the start of the line
 
-        last_active_agent = None
-
-        for agent in agents: 
-            if agent.current_status and any(x in agent.current_status for x in ['Iteration', 'Evolving', 'Planning', 'Reviewing']):
-                last_active_agent = agent
-            
-        if (last_active_agent is not None):
-            print("\n\n🤖 \033[1m Last Active Agent:\033[0m \n")
-            print(Fore.CYAN + f"{last_active_agent.purpose} is {last_active_agent.current_status}.." + Style.RESET_ALL + "\n", end='\r')
-            print(Fore.CYAN + f"{last_active_agent.purpose} last input was: {last_active_agent.last_input}.." + Style.RESET_ALL + "\n", end='\r')
-            print(Fore.CYAN + f"{last_active_agent.purpose} last output was: {last_active_agent.last_output}.." + Style.RESET_ALL + "\n", end='\r')
         time.sleep(1)
 
 def print_final_output(outputs, manager):
