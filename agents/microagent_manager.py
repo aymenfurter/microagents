@@ -21,6 +21,10 @@ class MicroAgentManager:
         self.agent_persistence = AgentPersistenceManager(db_filename)
         self.agent_lifecycle = AgentLifecycle(self.openai_wrapper, self.agent_persistence, max_agents)
         self.load_agents()
+
+    def cleanup_agents(self):
+        """Remove all agents with status stopped = True"""
+        self.agent_lifecycle.cleanup_agents()
     
     def load_agents(self):
         """Loads agents from the database."""
@@ -31,6 +35,7 @@ class MicroAgentManager:
 
     def get_agents(self) -> List[Any]:
         """Returns the list of agents."""
+        self.cleanup_agents()
         return self.agent_lifecycle.agents
 
     def create_agents(self) -> None:

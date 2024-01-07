@@ -25,6 +25,12 @@ class AgentLifecycle:
         self.agent_persistence = agent_persistance_manager
         self.max_agents = max_agents
 
+    def cleanup_agents(self):
+        """Remove all agents with status stopped = True"""
+        for agent in self.agents:
+            if agent.stopped:
+                self.agents.remove(agent)
+    
     def create_prime_agent(self) -> None:
         """
         Creates the prime agent and adds it to the agent list.
@@ -35,21 +41,23 @@ class AgentLifecycle:
         )
         self.agents.append(prime_agent)
 
-    def get_or_create_agent(self, purpose: str, depth: int, sample_input: str) -> MicroAgent:
+    def get_or_create_agent(self, purpose: str, depth: int, sample_input: str, force_new: bool = False) -> MicroAgent:
         """
         Retrieves or creates an agent based on the given purpose.
+        Optionally creates a new agent regardless of similarity if force_new is True.
         """
-        agent_similarity = AgentSimilarity(self.openai_wrapper, self.agents)
-        purpose_embedding = agent_similarity.get_embedding(purpose)
-        closest_agent, highest_similarity = agent_similarity.find_closest_agent(purpose_embedding)
-        similarity_threshold = agent_similarity.calculate_similarity_threshold()
+        if not force_new:
+            agent_similarity = AgentSimilarity(self.openai_wrapper, self.agents)
+            purpose_embedding = agent_similarity.get_embedding(purpose)
+            closest_agent, highest_similarity = agent_similarity.find_closest_agent(purpose_embedding)
+            similarity_threshold = agent_similarity.calculate_similarity_threshold()
 
-        if highest_similarity >= similarity_threshold:
-            closest_agent.usage_count += 1
-            return closest_agent
+            if highest_similarity >= similarity_threshold:
+                closest_agent.usage_count += 1
+                return closest_agent
 
         self.remove_least_used_agent_if_needed()
-        new_agent = self.create_new_agent(purpose, depth, sample_input, purpose_embedding)
+        new_agent = self.create_new_agent(purpose, depth, sample_input, None)  # Purpose embedding is not required if creating a new agent
         return new_agent
 
     def remove_least_used_agent_if_needed(self) -> None:

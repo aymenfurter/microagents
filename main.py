@@ -15,10 +15,6 @@ QUESTION_SET = [
 ]
 
 QUESTION_SET_2 = [
-    "What is 5+9?",
-    "What is the population of Thailand?",
-    "What is the population of Sweden?",
-    "What is the population of Sweden and Thailand combined?",
     "Find the current time in Tokyo, Japan.",
     "Read today's headline from a major news website.",
     "Identify the current weather condition in New York City.",
@@ -109,7 +105,7 @@ def main():
     try:
         process_questions(manager, outputs)
     finally:
-        time.sleep(5)
+        time.sleep(1)
         stop_event.set()
         print_final_output(outputs, manager)
         display_thread.join()

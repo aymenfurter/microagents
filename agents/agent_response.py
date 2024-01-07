@@ -1,5 +1,6 @@
 import logging
 from integrations.openaiwrapper import OpenAIAPIWrapper
+from agents.parallel_agent_executor import ParallelAgentExecutor
 from prompt_management.prompts import (
     REACT_STEP_POST, REACT_STEP_PROMPT, REACT_SYSTEM_PROMPT, REACT_PLAN_PROMPT, STATIC_PRE_PROMPT, STATIC_PRE_PROMPT_PRIME, REACT_STEP_PROMPT_PRIME, REACT_STEP_POST_PRIME
 )
@@ -112,8 +113,9 @@ class AgentResponse:
             accumulator += f"\nOutput {thought_number}: Unable to use Agent {agent_name}\nIt is not possible to call yourself!"
             return "", accumulator
         else:
-            delegated_agent = self.creator.get_or_create_agent(agent_name, depth=self.depth + 1, sample_input=input_text)
-            delegated_response = delegated_agent.respond(input_text)
+            parallel_executor = ParallelAgentExecutor(self.manager)
+            delegated_response = parallel_executor.create_and_run_agents(agent_name, self.depth + 1, input_text)
+
             accumulator += f"\nOutput {thought_number}: Delegated task to Agent {agent_name}\nOutput of Agent {action_number}: {delegated_response}"
             return delegated_response, accumulator
 
