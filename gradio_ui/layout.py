@@ -25,16 +25,16 @@ def create_layout():
     logging.getLogger().setLevel(logging.INFO)
     logging.getLogger().propagate = False
 
-    # Function to fetch logs
     def fetch_logs():
         return "\n".join(log_handler.get_logs())
-
-    # Dropdown for selecting an agent
 
     default_agent = "Bootstrap Agent"
     with gr.Blocks() as layout:
         gr.Markdown("## Microagents")
 
+        gr.Markdown("### Agents")
+        agent_table_component = agent_table.display()
+        gr.Row(agent_table_component)
         gr.Markdown("### Chat")
         chat_interface_component = chat_interface.display()
         gr.Row(chat_interface_component)
@@ -53,10 +53,6 @@ def create_layout():
                 agent_details_component = agent_details.display(selected_agent="")
                 agent_selector.change(lambda selected_agent: agent_details.display(selected_agent), inputs=agent_selector, outputs=agent_details_component)
                 gr.Row(agent_details_component)
-
-        gr.Markdown("### Agents")
-        agent_table_component = agent_table.display()
-        gr.Row(agent_table_component)
 
         layout.load(fetch_logs, [], logs_display, every=1)
         layout.load(lambda: agent_table.refresh(), [], agent_table_component, every=1)
