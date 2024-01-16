@@ -88,3 +88,12 @@ class MicroAgent:
         Generate a response to the given input text.
         """
         return self.response_handler.respond(input_text, evolve_count)
+
+    def __eq__(self, other):
+        if not isinstance(other, MicroAgent):
+            return NotImplemented
+
+        return (self.dynamic_prompt, self.purpose) == (other.dynamic_prompt, other.purpose)
+
+    def __hash__(self):
+        return hash((self.dynamic_prompt, self.purpose))

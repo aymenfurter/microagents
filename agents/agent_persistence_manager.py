@@ -14,7 +14,7 @@ class AgentPersistenceManager:
         if agent.working_agent and not agent.is_prime:
             agent_dict = AgentSerializer.to_dict(agent)
             self.persistence.save_agent(agent_dict)
-
+        
     def load_agent(self, purpose, agent_lifecycle, openai_wrapper):
         """
         Load an agent with the given purpose from the database.

@@ -35,6 +35,10 @@ class AgentLifecycle:
         )
         self.agents.append(prime_agent)
 
+    def add_agent(self, agent: MicroAgent) -> None:
+        """Adds an agent to the list of agents."""
+        self.agents.append(agent)
+
     def get_or_create_agent(self, purpose: str, depth: int, sample_input: str, force_new: bool = False) -> MicroAgent:
         """
         Retrieves or creates an agent based on the given purpose.

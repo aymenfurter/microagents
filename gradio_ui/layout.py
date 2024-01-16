@@ -24,11 +24,22 @@ def create_layout():
     logging.getLogger().addHandler(log_handler)
     logging.getLogger().setLevel(logging.INFO)
     logging.getLogger().propagate = False
+    
+    def refresh_agent_list():
+        """Function to refresh the agent list in the dropdown."""
+        new_agent_choices = [agent['Agent'] for agent in agent_manager.get_agents_info()]
+        for i, agent in enumerate(new_agent_choices):
+            if "->" in agent:
+                new_agent_choices[i] = agent.split("->")[0]
+        return gr.Dropdown(label="Select Agent", choices=new_agent_choices, value=default_agent)
 
     def fetch_logs():
         return "\n".join(log_handler.get_logs())
 
     default_agent = "Bootstrap Agent"
+
+
+
     with gr.Blocks() as layout:
         gr.Markdown("## Microagents")
 
@@ -50,6 +61,10 @@ def create_layout():
                 agent_choices = [agent['Agent'] for agent in agent_manager.get_agents_info()]
                 agent_selector = gr.Dropdown(label="Select Agent", choices=agent_choices, value=default_agent)
                 gr.Row(agent_selector)
+                refresh_button = gr.Button("Refresh Agent List")
+                refresh_button.click(fn=refresh_agent_list, inputs=[], outputs=agent_selector)
+
+                gr.Row(refresh_button)
                 agent_details_component = agent_details.display(selected_agent="")
                 agent_selector.change(lambda selected_agent: agent_details.display(selected_agent), inputs=agent_selector, outputs=agent_details_component)
                 gr.Row(agent_details_component)

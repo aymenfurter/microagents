@@ -2,7 +2,7 @@ import threading
 import queue
 
 class ParallelAgentExecutor:
-    def __init__(self, agent_manager, max_parallel_agents=5):
+    def __init__(self, agent_manager, max_parallel_agents=3):
         self.agent_manager = agent_manager
         self.max_parallel_agents = max_parallel_agents
         self.response_queue = queue.Queue()
@@ -25,10 +25,6 @@ class ParallelAgentExecutor:
         while not self.execution_completed.is_set() and any(thread.is_alive() for _, thread in self.agents_and_threads):
             pass
 
-        for agent, thread in self.agents_and_threads:
-            if thread.is_alive():
-                agent.set_agent_deleted()
-
         winning_agent, winning_response = self.determine_winning_agent()
         if winning_agent:
             self.set_other_agents_as_deleted(winning_agent)
@@ -42,7 +38,7 @@ class ParallelAgentExecutor:
                 self.response_queue.put((agent, response))
                 self.execution_completed.set()
         except Exception as e:
-            pass  # Handle exceptions as necessary
+            pass
 
     def determine_winning_agent(self):
         if not self.response_queue.empty():
