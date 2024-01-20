@@ -1,11 +1,11 @@
 import threading
 import queue
 
-from agents.agent_name_evaluations import AgentNameEvaluator
+from agents.agent_name_evaluation import AgentNameEvaluator
 from integrations.openaiwrapper import OpenAIAPIWrapper
 
 class ParallelAgentExecutor:
-    def __init__(self, agent_manager, max_parallel_agents=1):
+    def __init__(self, agent_manager, max_parallel_agents=3):
         self.agent_manager = agent_manager
         self.max_parallel_agents = max_parallel_agents
         self.response_queue = queue.Queue()
@@ -21,7 +21,7 @@ class ParallelAgentExecutor:
         
         initial_agent = self.agent_manager.get_or_create_agent(purpose, depth, input_text, parent_agent=parent_agent)
         if initial_agent.is_working_agent():
-            if initial_agent.parent_id != parent_agent.id:
+            if parent_agent is not None and initial_agent.parent_id != parent_agent.id:
                 return "Unable to use Agent " + purpose + "\nUse or create another agent instead."
             else:
                 return initial_agent.respond(input_text)

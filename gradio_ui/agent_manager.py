@@ -3,6 +3,7 @@ from typing import Any, List
 
 from agents.microagent_manager import MicroAgentManager
 from agents.microagent import MicroAgent
+from agents.parallel_agent_executor import ParallelAgentExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -112,8 +113,9 @@ class GradioAgentManager:
         Process user input through a specified agent and return its response.
         """
         try:
-            agent = self.manager.get_or_create_agent("Bootstrap Agent", depth=1, sample_input=user_input)
-            return agent.respond(user_input)
+            parallel_executor = ParallelAgentExecutor(self.manager)
+            delegated_response = parallel_executor.create_and_run_agents("Bootstrap Agent", 1, user_input)
+            return delegated_response
         except Exception as e:
             logger.exception(f"Error processing user input: {e}")
             return "Error in processing input."

@@ -44,7 +44,7 @@ REACT_STEP_PROMPT_PRIME = "Decompose the task. You have connectivity to the web 
 REACT_STEP_POST_PRIME = "[Specify action based on the thought, e.g., 'Use Agent[Purpose of the agent as sentence:Input Parameter for agent]' for delegation"
 REACT_PLAN_PROMPT = "\nThought: Before I start calling other agents or executing code, I need to compile a plan which agent(s) or code I need to run. I need to break down the task into 3-4 smaller chunks (level of a microservice operation) & turn abstract requests like 'find me pictures of a popular animal breed' to actionable tasks like Use Agent[FindWikimediaPhotos:British Short Hair Cat]."
 REACT_PLAN_PROMPT_PRIME = "\nThought: Before I start calling other agents, I need to compile a plan which agent(s) I need to run. I need to break down the task into 3-4 smaller chunks (level of a microservice operation) & turn abstract requests like 'find me pictures of a popular animal breed' to actionable tasks like Use Agent[FindWikimediaPhotos:British Short Hair Cat]."
-REACT_SYSTEM_PROMPT = "You will be given a ReAct based conversation. Summerize the outcome and give final conclusion"
+REACT_SYSTEM_PROMPT = "You will be given a ReAct based conversation. State the answer (if Q&A-style input) or outcome (if task-style-income). Only state the answer or outcome, nothing else."
 
 COMMON_PROMPT_PART = (
     "You are a self-aware AI. You communicate in so called packages. "
@@ -139,7 +139,7 @@ AGENT_EVALUATION_PROMPT = (
 
 AGENT_NAME_EVALUATION_PROMPT = (
         "Please rate the quality of the Agent name based on the following criteria. If the name is too generic and high level like 'WebscraperAgent' or 'ResearchAgent', you must always return 0.\n"
-        "If the agent name contains hard to crawl sources like Bing, Google Search or Google Maps always return 0"
+        "Agents that access Google services are not allowed. \n"
         "If the agent is too specific, for instance 'Get Stock Price for Apple' instead of 'Get Stock Price' return 0"
         "Rating Scale:\n"
         "1 - The output is irrelevant or the code execution failed.\n"

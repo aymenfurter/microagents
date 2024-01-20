@@ -39,11 +39,8 @@ def create_layout():
 
     with gr.Blocks() as layout:
         gr.Markdown("## Microagents")
-
-        gr.Markdown("### Agents")
         agent_table_component = agent_table.display()
         gr.Row(agent_table_component)
-        gr.Markdown("### Chat")
         chat_interface_component = chat_interface.display()
         gr.Row(chat_interface_component)
 

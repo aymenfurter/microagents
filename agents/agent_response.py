@@ -43,7 +43,7 @@ class AgentResponse:
                 found_new_solution = True
                 break
 
-        return self._conclude_output(conversation_accumulator), conversation_accumulator, found_new_solution, thought_number
+        return self._conclude_output(conversation_accumulator, input_text), conversation_accumulator, found_new_solution, thought_number
 
     def _compose_system_prompt(self, runtime_context, dynamic_prompt):
         pre_prompt = STATIC_PRE_PROMPT_PRIME if self.agent.is_prime else STATIC_PRE_PROMPT
@@ -126,9 +126,11 @@ class AgentResponse:
         input_text = split_info[1].strip() if len(split_info) > 1 else ""
         return agent_name, input_text
 
-    def _conclude_output(self, conversation):
+    def _conclude_output(self, conversation, input_text):
+        
         react_prompt = conversation
-
+        react_prompt += f"\nYour designation is: {self.agent.purpose}\n"
+        react_prompt += f"\nThe original question / task was: {input_text}\n"
         self.agent.update_status('🧐 Reviewing..')
         return self.openai_wrapper.chat_completion(
             messages=[

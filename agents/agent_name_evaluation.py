@@ -2,8 +2,10 @@ import logging
 from integrations.memoize import memoize_to_sqlite
 from integrations.openaiwrapper import OpenAIAPIWrapper
 from prompt_management.prompts import AGENT_NAME_EVALUATION_PROMPT
-# Basic logging setup
 logger = logging.getLogger()
+
+#feature flag
+DISABLE_AGENT_NAME_EVALUATION = True
 
 class AgentNameEvaluator:
     """
@@ -18,6 +20,8 @@ class AgentNameEvaluator:
         """
         Returns evaluation agents response (score from 1-5) 
         """
+        if DISABLE_AGENT_NAME_EVALUATION:
+            return "5"
 
         try:
             formatted_prompt = AGENT_NAME_EVALUATION_PROMPT.format(input=input_text, agent_name=agent_name)

@@ -54,11 +54,14 @@ class ChatInterface:
     def __init__(self, agent_manager):
         self.agent_manager = agent_manager
 
-    def chat_function(self, message):
+    def chat_function(self, message, history):
         return self.agent_manager.process_user_input(message)
 
+    def cancel_function(self):
+        pass
+
     def display(self):
-        chat_input = gr.Textbox(label="Your Message")
-        chat_output = gr.Textbox(label="Chat Response")
-        chat_interface = gr.Interface(fn=self.chat_function, inputs=chat_input, outputs=chat_output)
+        #chat_input = gr.Textbox(label="Your Message")
+        #chat_output = gr.Textbox(label="Chat Response")
+        chat_interface = gr.ChatInterface(examples=["What is the population of Japan?", "What is today's top news?"],fn=self.chat_function, title="Chat", stop_btn="Cancel")
         return chat_interface
