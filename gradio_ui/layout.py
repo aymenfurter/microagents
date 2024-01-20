@@ -27,10 +27,7 @@ def create_layout():
     
     def refresh_agent_list():
         """Function to refresh the agent list in the dropdown."""
-        new_agent_choices = [agent['Agent'] for agent in agent_manager.get_agents_info()]
-        for i, agent in enumerate(new_agent_choices):
-            if "->" in agent:
-                new_agent_choices[i] = agent.split("->")[0]
+        new_agent_choices = [agent['Agent'] for agent in agent_manager.get_agents_info_flat()]
         return gr.Dropdown(label="Select Agent", choices=new_agent_choices, value=default_agent)
 
     def fetch_logs():
@@ -58,7 +55,7 @@ def create_layout():
 
             with gr.Column():
                 gr.Markdown("### Details")
-                agent_choices = [agent['Agent'] for agent in agent_manager.get_agents_info()]
+                agent_choices = [agent['Agent'] for agent in agent_manager.get_agents_info_flat()]
                 agent_selector = gr.Dropdown(label="Select Agent", choices=agent_choices, value=default_agent)
                 gr.Row(agent_selector)
                 refresh_button = gr.Button("Refresh Agent List")

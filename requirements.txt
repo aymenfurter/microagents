@@ -27,6 +27,7 @@ statsmodels
 click
 python-dotenv
 virtualenv
+feedparser
 
 # Web Scraping
 scrapy

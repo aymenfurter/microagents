@@ -16,7 +16,7 @@ QUESTION_SET = [
 
 QUESTION_SET_2 = [
     "Find the current time in Tokyo, Japan.",
-    "Read today's headline from a major news website.",
+    "Read today's headline news from CNN.",
     "Identify the current weather condition in New York City.",
     "List today's top three sports news stories.",
     "Describe the plot of the latest movie released this week.",

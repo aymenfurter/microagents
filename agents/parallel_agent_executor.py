@@ -1,23 +1,35 @@
 import threading
 import queue
 
+from agents.agent_name_evaluations import AgentNameEvaluator
+from integrations.openaiwrapper import OpenAIAPIWrapper
+
 class ParallelAgentExecutor:
-    def __init__(self, agent_manager, max_parallel_agents=3):
+    def __init__(self, agent_manager, max_parallel_agents=1):
         self.agent_manager = agent_manager
         self.max_parallel_agents = max_parallel_agents
         self.response_queue = queue.Queue()
         self.agents_and_threads = []
         self.execution_completed = threading.Event()
+        self.agent_name_evaluator = AgentNameEvaluator(agent_manager.openai_wrapper)
 
-    def create_and_run_agents(self, purpose, depth, input_text):
-        initial_agent = self.agent_manager.get_or_create_agent(purpose, depth, input_text)
+    def create_and_run_agents(self, purpose, depth, input_text, parent_agent=None):
+        is_valid_agent_name = self.agent_name_evaluator.evaluate(input_text, purpose)
+        
+        if not is_valid_agent_name:
+            return f"Unable to use Agent {purpose}\nInvalid Agent name. Try again with a less generic name."
+        
+        initial_agent = self.agent_manager.get_or_create_agent(purpose, depth, input_text, parent_agent=parent_agent)
         if initial_agent.is_working_agent():
-            return initial_agent.respond(input_text)
+            if initial_agent.parent_id != parent_agent.id:
+                return "Unable to use Agent " + purpose + "\nUse or create another agent instead."
+            else:
+                return initial_agent.respond(input_text)
         
         initial_agent.set_agent_deleted()
 
         for _ in range(self.max_parallel_agents):
-            new_agent = self.agent_manager.get_or_create_agent(purpose, depth, input_text, force_new=True)
+            new_agent = self.agent_manager.get_or_create_agent(purpose, depth, input_text, force_new=True, parent_agent=parent_agent)
             new_thread = threading.Thread(target=self.run_agent, args=(new_agent, input_text))
             new_thread.start()
             self.agents_and_threads.append((new_agent, new_thread))
@@ -49,6 +61,11 @@ class ParallelAgentExecutor:
         for agent, _ in self.agents_and_threads:
             if agent != winning_agent:
                 agent.set_agent_deleted()
+                for child in agent.get_children():
+                    child.set_agent_deleted()
+                # FIXME: DELETE AGENTS WITH PARENTS TO THAT AGENT
+                # BOTH REMOVE FROM DB (if required) and set as deleted.
+                
 
     def is_working_agent(self):
         return any(agent.is_working_agent() for agent, _ in self.agents_and_threads)

@@ -19,6 +19,8 @@ class AgentSerializer:
             "depth": agent.depth,
             "max_depth": agent.max_depth,
             "usage_count": agent.usage_count,
+            "id": agent.id,
+            "parent_id": agent.parent_id,
             "working_agent": agent.working_agent,
             "is_prime": agent.is_prime,
             "evolve_count": agent.evolve_count,
@@ -39,7 +41,9 @@ class AgentSerializer:
             openai_wrapper,
             data["max_depth"],
             data.get("working_agent", False),
-            data.get("is_prime", False)
+            data.get("is_prime", False),
+            id=data["id"],
+            parent_id=data["parent_id"]
         )
 
         if data.get("purpose_embedding") is not None:
