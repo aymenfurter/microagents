@@ -27,7 +27,7 @@ class TestSQLiteAgentPersistence(unittest.TestCase):
             self.assertIsNotNone(cursor.fetchone())
 
     def test_save_agent(self):
-        agent_dict = {'purpose': 'test', 'data': 'some_data'}
+        agent_dict = {'purpose': 'test', 'data': 'some_data', 'id': 'test_id'}
         self.persistence.save_agent(agent_dict)
 
         with sqlite3.connect(self.db_file) as conn:
@@ -38,15 +38,15 @@ class TestSQLiteAgentPersistence(unittest.TestCase):
             self.assertEqual(json.loads(data[0]), agent_dict)
 
     def test_fetch_agent(self):
-        agent_dict = {'purpose': 'fetch_test', 'data': 'fetch_data'}
+        agent_dict = {'purpose': 'fetch_test', 'data': 'fetch_data', 'id': 'fetch_id'}
         self.persistence.save_agent(agent_dict)
 
         fetched_agent = self.persistence.fetch_agent('fetch_test')
         self.assertEqual(fetched_agent, agent_dict)
 
     def test_load_all_purposes(self):
-        agent_dict1 = {'purpose': 'purpose1', 'data': 'data1'}
-        agent_dict2 = {'purpose': 'purpose2', 'data': 'data2'}
+        agent_dict1 = {'purpose': 'purpose1', 'data': 'data1', 'id': 'test_id'}
+        agent_dict2 = {'purpose': 'purpose2', 'data': 'data2', 'id': 'test_id2'}
         self.persistence.save_agent(agent_dict1)
         self.persistence.save_agent(agent_dict2)
 

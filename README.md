@@ -1,71 +1,157 @@
-# microagents: Modular Agents Capable of Self-Editing Their Prompts and Python code
+<div id="top"></div>
 
-<a href="https://raw.githubusercontent.com/aymenfurter/microagents/main/static/output.gif" target="_blank">
-<img src="https://raw.githubusercontent.com/aymenfurter/microagents/main/static/output.gif?raw=true"
-Fullscreen</a>
+<br />
+<div align="center">
+  <img src="header.png">
 
-### Synthesized Agent Prompts (From Above Demo)
+  <h1 align="center">Microagents Framework</h1>
+  <p align="center">
+    An experimental framework for dynamically creating self-improving agents in response to tasks.
+    <br />
+    <br />
+    <a href="#demo">View Demo</a>
+    ·
+    <a href="https://github.com/aymenfurter/microagents/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/aymenfurter/microagents/issues">Request Feature</a>
+  </p>
+</div>
+<br />
 
-#### CalculateAddition Agent
+## About The Project
+
+Microagents represents a new approach to creating self-improving agents. These _microagents_ are dynamically generated in response to tasks assigned by the user to the assistant, assessed for their functionality, and, upon successful validation, stored for future reuse. This enables learning across chat sessions, enabling the system to independently deduce methods for task execution.
+
+### Built With
+
+This project leverages the following technologies:
+
+- Python
+- OpenAI's GPT-4 Turbo
+- Text-Embedding-Ada-002
+
+## Getting Started
+
+To get a local copy up and running follow these simple steps.
+
+### Prerequisites
+
+- OpenAI Account: Make sure you have an OpenAI account with access to `gpt-4-turbo` and `text-embedding-ada-002`.
+
+### Installation
+
+1. Clone the repo
+   ```sh
+   git clone https://github.com/aymenfurter/microagents.git
+   ```
+2. Install Python packages
+   ```sh
+   pip install -r requirements.txt
+   ```
+3. Set your OpenAI API key in an environment variable
+   ```sh
+   export OPENAI_KEY='your_api_key_here'
+   ```
+
+## Usage
+> [!CAUTION]
+> Microagents execute Python code directly and currently do not operate within a sandbox. It's highly recommended to run them in isolated environments such as GitHub Codespaces to limit potential damage. Be mindful of the costs associated with using OpenAI's services.
+
+For a demo run, execute:
+   ```sh
+    python main.py
+   ```
+
+For an interactive chat experience:
+   ```sh
+    python app.py
+   ```
+    
+To remove all agents, simply delete the "agents.db" file.
+
+
+## Demo
+
+<div align="center">
+  <img src="demo.gif" alt="Demo" style="border: 2px solid yellow;">
+</div>
+
+### Synthesized Agent Prompts
+
+ 
+#### Fetch Weather Forecast Agent
 ```
-You are an adept arithmetic solver with focus on performing addition. Utilize this Python function to calculate the sum of two numbers:
+You are an adept weather informant. Fetch the weather forecast by accessing public API data using this Python code snippet:
 
 ``python
-def calculate_addition(num1, num2):
-    return num1 + num2
+import requests
+import json
 
-# Example usage:
-print(calculate_addition(5, 9))
+def fetch_weather_forecast(location, date):
+    response = requests.get(f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={location[0]}&lon={location[1]}")
+    weather_data = response.json()
+    for day_data in weather_data['properties']['timeseries']:
+        if date in day_data['time']:
+            print(day_data['data']['instant']['details'])
+            break
 ``
+# Example usage: fetch_weather_forecast((47.3769, 8.5417), '2024-01-22T12:00:00Z')
+Note: Replace the (47.3769, 8.5417) with the actual latitude and longitude of the location and the date string accordingly.
 ```
 
-#### GetPopulationOfCountry Agent
+#### IPBasedLocationFetcher Agent
 ```
-You are a skilled data extractor specializing in population statistics. Retrieve the population of a given country using the provided Python code:
+You are a skilled IP-based location retriever. Use Python's requests library to obtain geolocation data from a public IP address. Here is a sample code snippet you may adapt:
 
 ``python
 import requests
 
-def get_population(country):
-    url = f"https://restcountries.com/v3.1/name/{country}"
-    response = requests.get(url).json()
-    population = response[0]['population']
-    print(f"The population of {country} is {population}.")
-
-# Example usage:
-get_population("CountryName")
+def fetch_location_from_ip(ip_address):
+    response = requests.get(f'http://ip-api.com/json/{ip_address}')
+    data = response.json()
+    return data.get('country'), data.get('city')
 ``
+
+# Example usage: 
+# print(fetch_location_from_ip('8.8.8.8'))
+Ensure that the code is capable of extracting location information such as country and city from the provided IP address.
 ```
 
-### How does it work?
-This experiment explores self-evolving agents that automatically generate and improve themselves. No specific agent design or prompting is required from the user. Simply pose a question, and the system initiates and evolves agents tailored to provide answers. The process starts with a user query, activating a basic "bootstrap" agent, which doesn't execute Python code but plans and delegates to specialized agents capable of running Python for broader functions. An Agent Manager oversees them, selecting or creating agents via vector similarity for specific tasks. Agents have evolving system prompts that improve through learning. For coding tasks, agents include Python in prompts, refining their approach through an "evolution step" if unsuccessful. Upon completing a task, an agent's status updates, and the bootstrap agent evaluates the result, engaging other agents for further steps in larger processes.
-
-### Current Challenges and Potential Improvements
-
-1. **Path Optimization**: The system sometimes fails to effectively discard non-functional agents.
-
-2. **Performance and Parallelization**: Currently, parallel processing is not implemented. Enabling the testing of multiple prompt evolutions simultaneously could significantly enhance performance.
-
-3. **Strategy for Prompt Evolution**: The approach to prompt evolution is quite basic at the moment. Developing a method to quantify the success ratio would refine this strategy. 
-
-4. **Persistent Agent Prompts**: There is significant potential in integrating persistent agent prompts with vector databases. Additionally, sharing successful agents across various runtime environments could improve overall efficiency.
-
-5. **Hierarchical Agent Structure**: Most requests are presently processed directly by an agent designated by the bootstrap agent. Implementing a more intricate hierarchical structure for managing requests could lead to major improvements.
-
-6. **Context Size Limitation**: Not yet considered.
-
-### How to Run Microagents
-> [!CAUTION]
-> Microagents are capable of directly executing Python code. There is currently no sandbox. Therefore, it is highly recommended to run them in isolated environments like GitHub Codespaces, where potential damage is limited. Be aware of the potential costs associated with the usage of OpenAI's services.
-
-#### Prerequisites
-- **OpenAI Account**: Ensure you have an OpenAI account with access to `gpt-4-turbo` And `text-embedding-ada-002`.
-
-#### Running the Agents
-1. **Clone the Repository**: Start by cloning the Microagents repository from GitHub.
-2. **Install Python Requirements**: Install the necessary Python requirements using `pip install -r requirements.txt`.
-3. **OpenAI API Key**: Set your OpenAI API key in an environment variable named `OPENAI_KEY`.
-4. **Load Pretrained Agents**: Load the pretrained agents by running `mv pretrained_agents.db agents.db`.
-5. **Execution**: For the demo, run `python main.py`. For an interactive chat experience, execute `python app.py`.
 
 
+<details>
+  <summary>How are agents created?</summary>
+  <img src="architecture.png" width="600">  
+</details>
+
+## Changelog
+
+### Release v0.1.0 (21.01.2024)
+
+This is the first release of Microagents, and a lot has happened since the initial project publication. Here are the key updates:
+
+- **Pull Requests**: The project has received a total of 6 Pull Requests, highlighting the interest from the community.
+
+- **Two User Interfaces**: We now offer two user interfaces for interacting with the agents:
+  - For console enthusiasts, there is a Command Line Interface (CLI) available, which can be started using the `textual-app.py` file. This interface is a community contribution by bearney74.
+  - Additionally, we provide a feature-rich web interface based on Gradio.
+  
+- **Parallelization**: Microagents now support parallelism! When a new agent is created, three agents are actually spawned in parallel. The first agent to successfully complete its task is retained, while the others are disposed of.
+
+- **Pretrained Agents**: We have introduced 28 pretrained agents that are included for testing. These agents enable a wide range of tasks, from interacting with OpenStreetMap to providing current weather information. All of these agents were trained using Microagents.
+
+- **Validation Phase ("Judge")**: A new 'Judge' phase has been added to ensure that agents that claim to be working actually perform as expected. This additional validation step ensures that only fully functional agents are included in the catalog of working agents.
+
+- **Persistent Agent Storage**: Agents are now stored across runs, with SQLite being used for this purpose. 
+
+- **Improved Agent Memory**: Agents now have the ability to remember only the agents they have previously created. This approach enhances the robustness of agent creation, as it avoids unnecessary depth changes during execution.
+
+These updates represent a significant enhancement to Microagents. I am looking forward to further improvements and contributions from the community.
+
+## Contributing
+
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.

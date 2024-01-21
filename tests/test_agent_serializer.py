@@ -43,6 +43,8 @@ class TestAgentSerializer(unittest.TestCase):
             "working_agent": True,
             "is_prime": False,
             "evolve_count": 3,
+            "id": 1,
+            "parent_id": 2,
             "number_of_code_executions": 20,
             "last_input": "test input"
         }

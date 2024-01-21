@@ -7,6 +7,12 @@ class AgentPersistenceManager:
     def __init__(self, db_filename="agents.db"):
         self.persistence = SQLiteAgentPersistence(db_filename)
 
+    def remove_agent(self, agent):
+        """
+        Remove an agent from the database.
+        """
+        self.persistence.remove_agent(agent.id)
+
     def save_agent(self, agent):
         """
         Serialize and save the agent state if it is a working agent and not a prime agent.

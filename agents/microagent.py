@@ -1,4 +1,5 @@
 import logging
+import uuid
 from integrations.openaiwrapper import OpenAIAPIWrapper
 from agents.agent_evaluation import AgentEvaluator
 from agents.agent_response import AgentResponse
@@ -19,7 +20,7 @@ class MicroAgent:
     that interacts with the OpenAI API.
     """
 
-    def __init__(self, initial_prompt, purpose, depth, agent_lifecycle, openai_wrapper, max_depth=3, bootstrap_agent=False, is_prime=False, purpose_embedding=None) :
+    def __init__(self, initial_prompt, purpose, depth, agent_lifecycle, openai_wrapper, max_depth=3, bootstrap_agent=False, is_prime=False, purpose_embedding=None, parent=None, parent_id=None, id=None) :
         self.dynamic_prompt = initial_prompt
         self.purpose = purpose
         self.purpose_embedding = purpose_embedding 
@@ -38,6 +39,24 @@ class MicroAgent:
         self.last_conversation = ""
         self.stopped = False
         self.is_prime = is_prime
+        self.stop_execution = False
+
+        if parent:
+            self.parent_id = parent.id if parent else None
+        else: 
+            self.parent_id = None
+
+        if parent_id:
+            self.parent_id = parent_id
+
+        if is_prime:
+            self.id = "2a5e6fe9-1bb1-426c-9521-145caa2cf66b"
+        else:
+            if id:
+                self.id = id
+            else:
+                self.id = str(uuid.uuid4()) 
+
 
         # Initialize components used by the agent
         self.agent_evaluator = AgentEvaluator(self.openai_wrapper)
@@ -68,6 +87,10 @@ class MicroAgent:
         self.agent_lifecycle.save_agent(self)
         logger.info(f"Agent {self.purpose} set as working agent.")
 
+    def get_children(self):
+        """Get the children of the agent."""
+        return [agent for agent in self.agent_lifecycle.agents if agent.parent_id == self.id]
+
     def is_working_agent(self):
         return self.working_agent
 
@@ -76,11 +99,16 @@ class MicroAgent:
         self.working_agent = False
         self.current_status = "❌ Deleted"
         self.stopped = True
+        self.stop_execution = True
+        self.agent_lifecycle.remove_agent(self)
         logger.info(f"Agent {self.purpose} set as deleted.")
 
     def check_for_stopped(self):
         """Check if the agent has been stopped."""
-        if self.stopped:
+        if self.stop_execution:
+            self.current_status = "❌ Stopped"
+            if self.is_prime:
+                self.agent_lifecycle.reset_all_agents()
             raise AgentStoppedException("Agent stopped.")
 
     def respond(self, input_text, evolve_count=0):
@@ -88,6 +116,17 @@ class MicroAgent:
         Generate a response to the given input text.
         """
         return self.response_handler.respond(input_text, evolve_count)
+    
+    def stop(self): 
+        """Stop the agent."""
+        self.stop_execution = True
+        if not self.is_working_agent():
+            self.stopped = True
+
+    def reset(self):
+        """Reset the agent's stopped status."""
+        self.current_status = ""
+        self.stop_execution = False
 
     def __eq__(self, other):
         if not isinstance(other, MicroAgent):

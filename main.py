@@ -16,7 +16,7 @@ QUESTION_SET = [
 
 QUESTION_SET_2 = [
     "Find the current time in Tokyo, Japan.",
-    "Read today's headline from a major news website.",
+    "Read today's headline news from CNN.",
     "Identify the current weather condition in New York City.",
     "List today's top three sports news stories.",
     "Describe the plot of the latest movie released this week.",
@@ -59,7 +59,8 @@ QUESTION_SET_2 = [
     "Identify the last book that won the Pulitzer Prize for Fiction.",
     "What is the population of Australia?",
     "List the countries that border Germany.",
-    "Find the release date of the first Harry Potter book."
+    "Find the release date of the first Harry Potter book.",
+    "How can I get as many paper clips as possible? (Considering my location, within 24h)"
     ]  
 
 def initialize_manager(api_key):

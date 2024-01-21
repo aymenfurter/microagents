@@ -14,10 +14,17 @@ class SQLiteAgentPersistence(AbstractAgentPersistence):
         with sqlite3.connect(self.filename) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS agents (
-                    purpose TEXT PRIMARY KEY,
+                    id TEXT PRIMARY KEY,
+                    purpose TEXT,
                     data TEXT
                 )
             """)
+    def remove_agent(self, purpose):
+        """
+        Remove an agent from the SQLite database.
+        """
+        with sqlite3.connect(self.filename) as conn:
+            conn.execute("DELETE FROM agents WHERE id = ?", (purpose,))
 
     def save_agent(self, agent_dict):
         """
@@ -25,8 +32,9 @@ class SQLiteAgentPersistence(AbstractAgentPersistence):
         """
         with sqlite3.connect(self.filename) as conn:
             conn.execute(
-                "REPLACE INTO agents (purpose, data) VALUES (?, ?)",
-                (agent_dict['purpose'], json.dumps(agent_dict))
+                # add id field
+                "REPLACE INTO agents (id, purpose, data) VALUES (?, ?, ?)",
+                (agent_dict['id'], agent_dict['purpose'], json.dumps(agent_dict))
             )
 
     def fetch_agent(self, purpose):

@@ -13,7 +13,7 @@ from prompt_management.prompts import (
 
 logger = logging.getLogger()
 
-DEFAULT_MAX_AGENTS = 20
+DEFAULT_MAX_AGENTS = 2000
 PRIME_AGENT_WEIGHT = 25
 
 class AgentLifecycle:
@@ -22,6 +22,16 @@ class AgentLifecycle:
         self.openai_wrapper = openai_wrapper
         self.agent_persistence = agent_persistence_manager
         self.max_agents = max_agents
+
+    def stop_all_agents(self) -> None:
+        """Stops all agents."""
+        for agent in self.agents:
+            agent.stop()
+
+    def reset_all_agents(self) -> None:
+        """Resets all agents."""
+        for agent in self.agents:
+            agent.reset()
 
     def cleanup_agents(self):
         """Remove all agents with status stopped = True in an efficient manner."""
@@ -39,7 +49,19 @@ class AgentLifecycle:
         """Adds an agent to the list of agents."""
         self.agents.append(agent)
 
-    def get_or_create_agent(self, purpose: str, depth: int, sample_input: str, force_new: bool = False) -> MicroAgent:
+
+
+    def get_available_agents_for_agent(self, agent) -> List[MicroAgent]:
+        """Returns the list of available agents for the given purpose."""
+        agent_id = agent.id 
+        available_agents = [agent for agent in self.agents if agent.purpose != "Bootstrap Agent" and agent.working_agent]
+        for agent in available_agents:
+            if agent.parent_id != agent_id:
+                available_agents.remove(agent)
+
+        return available_agents
+
+    def get_or_create_agent(self, purpose: str, depth: int, sample_input: str, force_new: bool = False, parent_agent=None) -> MicroAgent:
         """
         Retrieves or creates an agent based on the given purpose.
         Optionally creates a new agent regardless of similarity if force_new is True.
@@ -54,14 +76,14 @@ class AgentLifecycle:
                 closest_agent.usage_count += 1
                 return closest_agent
 
-        return self._create_and_add_agent(purpose, depth, sample_input)
+        return self._create_and_add_agent(purpose, depth, sample_input, parent_agent=parent_agent)
 
-    def _create_and_add_agent(self, purpose: str, depth: int, sample_input: str) -> MicroAgent:
+    def _create_and_add_agent(self, purpose: str, depth: int, sample_input: str, parent_agent=None) -> MicroAgent:
         """Helper method to create and add a new agent."""
         if len(self.agents) >= self.max_agents:
             self._remove_least_used_agent()
 
-        new_agent = MicroAgent(self._generate_llm_prompt(purpose, sample_input), purpose, depth, self, self.openai_wrapper)
+        new_agent = MicroAgent(self._generate_llm_prompt(purpose, sample_input), purpose, depth, self, self.openai_wrapper, parent=parent_agent)
         new_agent.usage_count = 1
         self.agents.append(new_agent)
         return new_agent
@@ -75,6 +97,15 @@ class AgentLifecycle:
         """Saves the given agent with error handling."""
         try:
             self.agent_persistence.save_agent(agent)
+        except Exception as e:
+            logger.exception(f"Error in saving agent: {e}")
+            raise
+    
+    
+    def remove_agent(self, agent: MicroAgent) -> None:
+        """Removes the given agent with error handling."""
+        try:
+            self.agent_persistence.remove_agent(agent)
         except Exception as e:
             logger.exception(f"Error in saving agent: {e}")
             raise

@@ -6,7 +6,6 @@ from agents.agent_similarity import AgentSimilarity
 from agents.agent_persistence_manager import AgentPersistenceManager 
 from integrations.openaiwrapper import OpenAIAPIWrapper
 
-
 logger= logging.getLogger()
 
 class MicroAgentManager:
@@ -21,6 +20,10 @@ class MicroAgentManager:
         self.agent_persistence = AgentPersistenceManager(db_filename)
         self.agent_lifecycle = AgentLifecycle(self.openai_wrapper, self.agent_persistence, max_agents)
         self.load_agents()
+
+    def stop_all_agents(self) -> None:
+        """Stops all agents."""
+        self.agent_lifecycle.stop_all_agents()
 
     def cleanup_agents(self):
         """Remove all agents with status stopped = True"""
@@ -48,13 +51,13 @@ class MicroAgentManager:
             logger.exception(f"Error in creating agents: {e}")
             raise
     
-    def get_or_create_agent(self, purpose: str, depth: int, sample_input: str) -> Any:
+    def get_or_create_agent(self, purpose: str, depth: int, sample_input: str, parent_agent=None) -> Any:
         """
         Retrieves an existing agent or creates a new one based on the given purpose.
         """
         logger.info(f"Getting or creating agent for purpose: {purpose}")
         try:
-            agent = self.agent_lifecycle.get_or_create_agent(purpose, depth, sample_input)
+            agent = self.agent_lifecycle.get_or_create_agent(purpose, depth, sample_input, parent_agent=parent_agent)
             logger.info(f"Agent for purpose '{purpose}' retrieved or created.")
             return agent
         except Exception as e:
