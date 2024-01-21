@@ -121,7 +121,7 @@ Ensure that the code is capable of extracting location information such as count
 
 <details>
   <summary>How are agents created?</summary>
-  <img src="how it works.png" width="600">  
+  <img src="architecture.png" width="600">  
 </details>
 
 ## Changelog
