@@ -131,6 +131,7 @@ class AgentResponse:
         react_prompt = conversation
         react_prompt += f"\nYour designation is: {self.agent.purpose}\n"
         react_prompt += f"\nThe original question / task was: {input_text}\n"
+        react_prompt += f"\nUse beautiful markdown formatting in your output, e.g. include images using ![Drag Racing](https://example.com/Dragster.jpg)\n"
         self.agent.update_status('🧐 Reviewing..')
         return self.openai_wrapper.chat_completion(
             messages=[

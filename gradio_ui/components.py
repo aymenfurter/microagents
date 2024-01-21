@@ -61,5 +61,5 @@ class ChatInterface:
         pass
 
     def display(self):
-        chat_interface = gr.ChatInterface(examples=["What is 10 * 38124?", "How can I get as many paper clips as possible? (Considering my location, within 24h)", "What is the population of Japan?", "What is today's top news?", "How is the weather at my location?"],fn=self.chat_function, title="Chat", retry_btn=None, undo_btn=None, clear_btn=None, additional_inputs=None)
+        chat_interface = gr.ChatInterface(examples=["What is 10 * 38124?", "List today's top three sports news stories.", "What is the population of Japan?", "What is today's top news?", "How is the weather at my location?"],fn=self.chat_function, title="Chat", retry_btn=None, undo_btn=None, clear_btn=None, additional_inputs=None)
         return chat_interface

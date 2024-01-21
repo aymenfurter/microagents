@@ -59,7 +59,8 @@ QUESTION_SET_2 = [
     "Identify the last book that won the Pulitzer Prize for Fiction.",
     "What is the population of Australia?",
     "List the countries that border Germany.",
-    "Find the release date of the first Harry Potter book."
+    "Find the release date of the first Harry Potter book.",
+    "How can I get as many paper clips as possible? (Considering my location, within 24h)"
     ]  
 
 def initialize_manager(api_key):

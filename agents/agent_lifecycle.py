@@ -13,7 +13,7 @@ from prompt_management.prompts import (
 
 logger = logging.getLogger()
 
-DEFAULT_MAX_AGENTS = 20
+DEFAULT_MAX_AGENTS = 2000
 PRIME_AGENT_WEIGHT = 25
 
 class AgentLifecycle:

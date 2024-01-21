@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+</head>
+<body>
+<div id="map" style="width: 600px; height: 400px;"></div>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map').setView([51.5084521, -0.1087468], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {{
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }}).addTo(map);
+    var marker = L.marker([51.5084521, -0.1087468]).addTo(map);
+    marker.bindPopup("<b>You are here</b>").openPopup();
+</script>
+</body>
+</html>
