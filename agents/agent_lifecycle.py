@@ -23,6 +23,16 @@ class AgentLifecycle:
         self.agent_persistence = agent_persistence_manager
         self.max_agents = max_agents
 
+    def stop_all_agents(self) -> None:
+        """Stops all agents."""
+        for agent in self.agents:
+            agent.stop()
+
+    def reset_all_agents(self) -> None:
+        """Resets all agents."""
+        for agent in self.agents:
+            agent.reset()
+
     def cleanup_agents(self):
         """Remove all agents with status stopped = True in an efficient manner."""
         self.agents = [agent for agent in self.agents if not agent.stopped]
@@ -38,6 +48,8 @@ class AgentLifecycle:
     def add_agent(self, agent: MicroAgent) -> None:
         """Adds an agent to the list of agents."""
         self.agents.append(agent)
+
+
 
     def get_available_agents_for_agent(self, agent) -> List[MicroAgent]:
         """Returns the list of available agents for the given purpose."""

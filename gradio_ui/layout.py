@@ -29,6 +29,9 @@ def create_layout():
         """Function to refresh the agent list in the dropdown."""
         new_agent_choices = [agent['Agent'] for agent in agent_manager.get_agents_info_flat()]
         return gr.Dropdown(label="Select Agent", choices=new_agent_choices, value=default_agent)
+    
+    def cancel_execution():
+        agent_manager.stop_all_agents()
 
     def fetch_logs():
         return "\n".join(log_handler.get_logs())
@@ -44,6 +47,7 @@ def create_layout():
         chat_interface_component = chat_interface.display()
         gr.Row(chat_interface_component)
 
+
         with gr.Row():
             with gr.Column():
                 gr.Markdown("### Logs")
@@ -51,6 +55,10 @@ def create_layout():
                 gr.Row(logs_display)
 
             with gr.Column():
+                gr.Markdown("### Current Execution")
+                cancel_button = gr.Button("Cancel")
+                cancel_button.click(fn=cancel_execution, inputs=[])
+                gr.Row(cancel_button)
                 gr.Markdown("### Details")
                 agent_choices = [agent['Agent'] for agent in agent_manager.get_agents_info_flat()]
                 agent_selector = gr.Dropdown(label="Select Agent", choices=agent_choices, value=default_agent)

@@ -63,9 +63,6 @@ class ParallelAgentExecutor:
                 agent.set_agent_deleted()
                 for child in agent.get_children():
                     child.set_agent_deleted()
-                # FIXME: DELETE AGENTS WITH PARENTS TO THAT AGENT
-                # BOTH REMOVE FROM DB (if required) and set as deleted.
-                
 
     def is_working_agent(self):
         return any(agent.is_working_agent() for agent, _ in self.agents_and_threads)

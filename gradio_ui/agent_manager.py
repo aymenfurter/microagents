@@ -4,7 +4,7 @@ from typing import Any, List
 from agents.microagent_manager import MicroAgentManager
 from agents.microagent import MicroAgent
 from agents.parallel_agent_executor import ParallelAgentExecutor
-
+import time
 logger = logging.getLogger(__name__)
 
 class GradioAgentManager:
@@ -16,6 +16,9 @@ class GradioAgentManager:
         self.manager = MicroAgentManager(api_key)
         self.manager.create_agents()
 
+    def stop_all_agents(self) -> None:
+        """Stops all agents."""
+        self.manager.stop_all_agents()
 
     def get_agents_info_flat(self) -> List[dict]:
         """
@@ -41,7 +44,7 @@ class GradioAgentManager:
         """
         Sort agents based on their parent-child relationship.
         """
-        if not agents:  # Check if the agents list is empty or None
+        if not agents:
             return []
 
         agent_dict = {agent.id: agent for agent in agents}
@@ -50,13 +53,12 @@ class GradioAgentManager:
         def add_agent(agent_id, depth=0):
             agent = agent_dict.get(agent_id)
             if agent:
-                agent.depth = depth  # Set depth for tree structure
+                agent.depth = depth 
                 sorted_agents.append(agent)
                 children = [a for a in agents if getattr(a, 'parent_id', None) == agent_id]
                 for child in children:
                     add_agent(child.id, depth + 1)
 
-        # Find the bootstrap agent's ID
         bootstrap_agent_id = next((agent.id for agent in agents if getattr(agent, 'purpose', '') == "Bootstrap Agent"), None)
         if bootstrap_agent_id is not None:
             add_agent(bootstrap_agent_id)

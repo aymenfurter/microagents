@@ -39,6 +39,7 @@ class MicroAgent:
         self.last_conversation = ""
         self.stopped = False
         self.is_prime = is_prime
+        self.stop_execution = False
 
         if parent:
             self.parent_id = parent.id if parent else None
@@ -98,12 +99,16 @@ class MicroAgent:
         self.working_agent = False
         self.current_status = "❌ Deleted"
         self.stopped = True
+        self.stop_execution = True
         self.agent_lifecycle.remove_agent(self)
         logger.info(f"Agent {self.purpose} set as deleted.")
 
     def check_for_stopped(self):
         """Check if the agent has been stopped."""
-        if self.stopped:
+        if self.stop_execution:
+            self.current_status = "❌ Stopped"
+            if self.is_prime:
+                self.agent_lifecycle.reset_all_agents()
             raise AgentStoppedException("Agent stopped.")
 
     def respond(self, input_text, evolve_count=0):
@@ -111,6 +116,17 @@ class MicroAgent:
         Generate a response to the given input text.
         """
         return self.response_handler.respond(input_text, evolve_count)
+    
+    def stop(self): 
+        """Stop the agent."""
+        self.stop_execution = True
+        if not self.is_working_agent():
+            self.stopped = True
+
+    def reset(self):
+        """Reset the agent's stopped status."""
+        self.current_status = ""
+        self.stop_execution = False
 
     def __eq__(self, other):
         if not isinstance(other, MicroAgent):

@@ -6,7 +6,6 @@ from agents.agent_similarity import AgentSimilarity
 from agents.agent_persistence_manager import AgentPersistenceManager 
 from integrations.openaiwrapper import OpenAIAPIWrapper
 
-
 logger= logging.getLogger()
 
 class MicroAgentManager:
@@ -21,10 +20,10 @@ class MicroAgentManager:
         self.agent_persistence = AgentPersistenceManager(db_filename)
         self.agent_lifecycle = AgentLifecycle(self.openai_wrapper, self.agent_persistence, max_agents)
         self.load_agents()
-    
-  
 
-            
+    def stop_all_agents(self) -> None:
+        """Stops all agents."""
+        self.agent_lifecycle.stop_all_agents()
 
     def cleanup_agents(self):
         """Remove all agents with status stopped = True"""
