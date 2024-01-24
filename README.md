@@ -20,7 +20,7 @@
 
 ## About The Project
 
-Microagents represents a new approach to creating self-improving agents. These _microagents_ are dynamically generated in response to tasks assigned by the user to the assistant, assessed for their functionality, and, upon successful validation, stored for future reuse. This enables learning across chat sessions, enabling the system to independently deduce methods for task execution.
+Microagents represents a new approach to creating self-improving agents. Small, microservice-sized (hence, _microagents_) agents are dynamically generated in response to tasks assigned by the user to the assistant, assessed for their functionality, and, upon successful validation, stored for future reuse. This enables learning across chat sessions, enabling the system to independently deduce methods for task execution.
 
 ### Built With
 
