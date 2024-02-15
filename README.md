@@ -72,7 +72,7 @@ To get a local copy up and running follow these simple steps.
 
 ## Usage
 > [!CAUTION]
-> Microagents execute Python code directly and currently do not operate within a sandbox. It's highly recommended to run them in isolated environments such as GitHub Codespaces or Docker ([README-DOcker.md](README-DOcker.md)) to limit potential damage. Be mindful of the costs associated with using OpenAI's services.
+> Microagents execute Python code directly and currently do not operate within a sandbox. It's highly recommended to run them in isolated environments such as GitHub Codespaces or Docker ([README-Docker.md](README-Docker.md)) to limit potential damage. Be mindful of the costs associated with using OpenAI's services.
 
 For a demo run, execute:
    ```sh
