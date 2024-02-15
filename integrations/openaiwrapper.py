@@ -93,7 +93,7 @@ def get_configured_openai_wrapper(timeout: float = 10, max_retries: int = 5):
             openai_client = openai.AzureOpenAI(**params),
             timeout = timeout,
             max_retries = max_retries
-        )       
+        )
 
 
 class OpenAIAPIWrapper:
