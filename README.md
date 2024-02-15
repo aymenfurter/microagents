@@ -48,10 +48,23 @@ To get a local copy up and running follow these simple steps.
    ```sh
    pip install -r requirements.txt
    ```
-3. Set your OpenAI API key in an environment variable
-   ```sh
-   export OPENAI_KEY='your_api_key_here'
-   ```
+3. Set the environment variable
+   - In case you want to use Open AI API:
+      ```sh
+      export OPENAI_KEY='your_api_key_here'
+      ```
+   - In case you want to use Azure Open AI with api key:
+      ```sh
+      export AZURE_OPENAI_API_KEY='your_api_key_here'
+      export AZURE_OPENAI_ENDPOINT='https://my_endpoint_name_here.openai.azure.com/'
+      ```
+   - In case you want to use Azure Open AI with Entra ID (AAD):
+      ```sh
+      export AZURE_OPENAI_ENDPOINT='https://my_endpoint_name_here.openai.azure.com/'
+      export AZURE_OPENAI_USE_AAD='true' # enables DefaultAzureCredential
+      # export AZURE_OPENAI_AD_TOKEN=''  # optionally specify the AAD token here
+      # export AZURE_CLIENT_ID=''        # optionally specify the client id of the managed identity
+      ```
 
 ## Usage
 > [!CAUTION]
