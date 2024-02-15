@@ -134,7 +134,21 @@ class OpenAIAPIWrapper:
 
         while time.time() - start_time < self.timeout:
             try:
-                return self._openai_client.embeddings.create(input=text, engine=ENGINE)
+                response = self._openai_client.embeddings.create(input=text, model=ENGINE)
+                data = {
+                    "data": [],
+                    "model": response.model,
+                    "usage" : {
+                        "prompt_tokens": response.usage.prompt_tokens,
+                        "total_tokens": response.usage.total_tokens
+                    }
+                }
+                for emb in response.data:
+                    data["data"].append({
+                        "embedding": emb.embedding,
+                        "index": emb.index
+                    })
+                return data
             except openai.OpenAIError as e:
                 logging.error(f"OpenAI API error: {e}")
                 retries += 1
