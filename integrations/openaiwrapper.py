@@ -72,7 +72,7 @@ def get_configured_openai_wrapper(timeout: float = 10, max_retries: int = 5):
         if azure_openai_endpoint is None:
             raise ValueError("Please set the required environment variable: AZURE_OPENAI_ENDPOINT")
         params = {
-            "api_endpoint": azure_openai_endpoint,
+            "azure_endpoint": azure_openai_endpoint,
             "api_version": azure_openai_api_version
         }
 
