@@ -57,8 +57,8 @@ To get a local copy up and running follow these simple steps.
       ```sh
       export AZURE_OPENAI_API_KEY='your_api_key_here'
       export AZURE_OPENAI_ENDPOINT='https://my_endpoint_name_here.openai.azure.com/'
-      # export OPENAI_EMBEDDING=''       # optionally set the azure deployment name of your ada embedding (in case they name is not text-embedding-ada-002)
-      # export OPENAI_MODEL=''           # optionally set the azure deployment name of your gpt 4 (in case they name is not gpt-4-1106-preview)
+      # export OPENAI_EMBEDDING=''       # optionally set the azure deployment name of your ada embedding (in case the name is not text-embedding-ada-002)
+      # export OPENAI_MODEL=''           # optionally set the azure deployment name of your gpt 4 (in case the name is not gpt-4-1106-preview)
       ```
    - In case you want to use Azure Open AI with Entra ID (AAD):
       ```sh
@@ -66,8 +66,8 @@ To get a local copy up and running follow these simple steps.
       export AZURE_OPENAI_USE_AAD='true' # enables DefaultAzureCredential
       # export AZURE_OPENAI_AD_TOKEN=''  # optionally specify the AAD token here
       # export AZURE_CLIENT_ID=''        # optionally specify the client id of the managed identity
-      # export OPENAI_EMBEDDING=''       # optionally set the azure deployment name of your ada embedding (in case they name is not text-embedding-ada-002)
-      # export OPENAI_MODEL=''           # optionally set the azure deployment name of your gpt 4 (in case they name is not gpt-4-1106-preview)
+      # export OPENAI_EMBEDDING=''       # optionally set the azure deployment name of your ada embedding (in case the name is not text-embedding-ada-002)
+      # export OPENAI_MODEL=''           # optionally set the azure deployment name of your gpt 4 (in case the name is not gpt-4-1106-preview)
       ```
 
 ## Usage
