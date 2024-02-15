@@ -16,7 +16,7 @@ class MicroAgentsLogic:
         try:
             openai_wrapper = get_configured_openai_wrapper()
             from agents.microagent_manager import MicroAgentManager
-            self.manager = MicroAgentManager(openai_wrapper)
+            self.manager = MicroAgentManager(openai_wrapper, get_env_variable("MICROAGENTS_DB_FILENAME", "agents.db", False))
             self.manager.create_agents()
         except Exception as e:
             self.app.statusbar.update(f"🚫 Error: {e}")

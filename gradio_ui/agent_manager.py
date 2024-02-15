@@ -5,6 +5,7 @@ from agents.microagent_manager import MicroAgentManager
 from agents.microagent import MicroAgent
 from agents.parallel_agent_executor import ParallelAgentExecutor
 from integrations.openaiwrapper import OpenAIAPIWrapper
+from utils.utility import get_env_variable
 import time
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class GradioAgentManager:
     """
 
     def __init__(self, openai_wrapper: OpenAIAPIWrapper):
-        self.manager = MicroAgentManager(openai_wrapper)
+        self.manager = MicroAgentManager(openai_wrapper, db_filename=get_env_variable("MICROAGENTS_DB_FILENAME", "agents.db", False))
         self.manager.create_agents()
 
     def stop_all_agents(self) -> None:
