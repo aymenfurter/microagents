@@ -68,7 +68,7 @@ def initialize_manager(openai_wrapper):
     """
     Initialize and return the MicroAgentManager
     """
-    manager = MicroAgentManager(openai_wrapper, , db_filename=get_env_variable("MICROAGENTS_DB_FILENAME", "agents.db", False))
+    manager = MicroAgentManager(openai_wrapper, db_filename=get_env_variable("MICROAGENTS_DB_FILENAME", "agents.db", False))
     manager.create_agents()
     return manager
 
