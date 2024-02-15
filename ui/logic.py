@@ -4,6 +4,7 @@ from functools import partial
 from ui.format import format_text
 from rich.text import Text
 from utils.utility import get_env_variable
+from integrations.openaiwrapper import get_configured_openai_wrapper
 
 class MicroAgentsLogic:
     def __init__(self, app):
@@ -12,13 +13,13 @@ class MicroAgentsLogic:
         self.initialize_manager()
 
     def initialize_manager(self):
-        api_key = get_env_variable("OPENAI_KEY", raise_error=False)
-        if not api_key:
-            self.app.statusbar.update("🚫 Error: OPENAI_KEY environment variable is not set.")
-        else:
+        try:
+            openai_wrapper = get_configured_openai_wrapper()
             from agents.microagent_manager import MicroAgentManager
-            self.manager = MicroAgentManager(api_key)
+            self.manager = MicroAgentManager(openai_wrapper, db_filename=get_env_variable("MICROAGENTS_DB_FILENAME", "agents.db", False))
             self.manager.create_agents()
+        except Exception as e:
+            self.app.statusbar.update(f"🚫 Error: {e}")
 
     async def on_input_submitted(self, event):
         self.app.run_worker(self.get_agent_info, thread=True, group="display_agent_info")

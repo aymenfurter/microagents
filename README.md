@@ -48,14 +48,31 @@ To get a local copy up and running follow these simple steps.
    ```sh
    pip install -r requirements.txt
    ```
-3. Set your OpenAI API key in an environment variable
-   ```sh
-   export OPENAI_KEY='your_api_key_here'
-   ```
+3. Set the environment variable
+   - In case you want to use Open AI API:
+      ```sh
+      export OPENAI_KEY='your_api_key_here'
+      ```
+   - In case you want to use Azure Open AI with api key:
+      ```sh
+      export AZURE_OPENAI_API_KEY='your_api_key_here'
+      export AZURE_OPENAI_ENDPOINT='https://my_endpoint_name_here.openai.azure.com/'
+      # export OPENAI_EMBEDDING=''       # optionally set the azure deployment name of your ada embedding (in case the name is not text-embedding-ada-002)
+      # export OPENAI_MODEL=''           # optionally set the azure deployment name of your gpt 4 (in case the name is not gpt-4-1106-preview)
+      ```
+   - In case you want to use Azure Open AI with Entra ID (AAD):
+      ```sh
+      export AZURE_OPENAI_ENDPOINT='https://my_endpoint_name_here.openai.azure.com/'
+      export AZURE_OPENAI_USE_AAD='true' # enables DefaultAzureCredential
+      # export AZURE_OPENAI_AD_TOKEN=''  # optionally specify the AAD token here
+      # export AZURE_CLIENT_ID=''        # optionally specify the client id of the managed identity
+      # export OPENAI_EMBEDDING=''       # optionally set the azure deployment name of your ada embedding (in case the name is not text-embedding-ada-002)
+      # export OPENAI_MODEL=''           # optionally set the azure deployment name of your gpt 4 (in case the name is not gpt-4-1106-preview)
+      ```
 
 ## Usage
 > [!CAUTION]
-> Microagents execute Python code directly and currently do not operate within a sandbox. It's highly recommended to run them in isolated environments such as GitHub Codespaces to limit potential damage. Be mindful of the costs associated with using OpenAI's services.
+> Microagents execute Python code directly and currently do not operate within a sandbox. It's highly recommended to run them in isolated environments such as GitHub Codespaces or Docker ([README-Docker.md](README-Docker.md)) to limit potential damage. Be mindful of the costs associated with using OpenAI's services.
 
 For a demo run, execute:
    ```sh
