@@ -6,7 +6,6 @@ from utils.utility import get_env_variable
 from .memoize import memoize_to_sqlite
 
 RETRY_SLEEP_DURATION = 1  # seconds
-MAX_RETRIES = 5
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -14,27 +13,113 @@ load_dotenv()
 ENGINE=get_env_variable("OPENAI_EMBEDDING", "text-embedding-ada-002", False)
 MODEL=get_env_variable("OPENAI_MODEL", "gpt-4-1106-preview", False)
 
-API_BASE = get_env_variable("OPENAI_API_BASE", None, False)
+def get_configured_openai_wrapper(timeout: float = 10, max_retries: int = 5):
+    """
+    Returns the configured OpenAI wrapper.
+
+        :param timeout: The timeout duration in seconds for API requests.
+        :param max_retries: Number of retries for API requests.
+    """
+    openai_base_url = get_env_variable("OPENAI_BASE_URL", None, False)
+    # backward compatibility with OPENAI_API_BASE
+    if openai_base_url is None:
+        openai_base_url = get_env_variable("OPENAI_API_BASE", None, False)
+    openai_api_key = get_env_variable("OPENAI_API_KEY", None, False)
+    openai_org_id = get_env_variable("OPENAI_ORG_ID", None, False)
+    azure_openai_api_key = get_env_variable("AZURE_OPENAI_API_KEY", None, False)
+    azure_openai_endpoint = get_env_variable("AZURE_OPENAI_ENDPOINT", None, False)
+    azure_openai_api_version = get_env_variable("AZURE_OPENAI_API_VERSION", "2023-07-01-preview", False)
+    azure_openai_use_aad = get_env_variable("AZURE_OPENAI_USE_AAD", "false", False).strip().lower()
+    azure_openai_ad_token = get_env_variable("AZURE_OPENAI_AD_TOKEN", None, False)
+    azure_client_id = get_env_variable("AZURE_CLIENT_ID", None, False)
+    
+
+    # convert to boolean
+    azure_openai_use_aad = ( azure_openai_use_aad == "true" or azure_openai_use_aad == "1"  or azure_openai_use_aad == "yes" or azure_openai_use_aad == "y" )
+
+    # in case no api tokens are set, check if azure ad authentication is requested
+    if openai_api_key is None and azure_openai_api_key is None:
+        if azure_client_id is not None:
+            azure_openai_use_aad = True
+        if azure_openai_ad_token is not None:
+            azure_openai_use_aad = True
+
+    # check if the required environment variables are set
+    if (
+         (openai_api_key is None and azure_openai_api_key is None and azure_openai_use_aad==False) or
+         (openai_api_key is not None and azure_openai_api_key is not None) or
+         (openai_api_key is not None and azure_openai_use_aad) or
+         (azure_openai_api_key is not None and azure_openai_use_aad)
+    ):
+        raise ValueError("Please set just one of the required environment variables: OPENAI_API_KEY or AZURE_OPENAI_API_KEY or AZURE_OPENAI_USE_AAD")
+        
+    # connect to openai or azure openai?
+    if openai_api_key is not None:
+        params = {
+            "api_key": openai_api_key
+        }
+        if openai_base_url is None:
+            logging.debug("Accessing OPENAI at %s" % openai_base_url)
+            params["base_url"] = openai_base_url
+        if openai_org_id is not None:
+            params["organization"] = openai_org_id
+        return OpenAIAPIWrapper(
+            openai_client = openai.OpenAI(**params),
+            timeout = timeout,
+            max_retries = max_retries
+        )
+    else:
+        if azure_openai_endpoint is None:
+            raise ValueError("Please set the required environment variable: AZURE_OPENAI_ENDPOINT")
+        params = {
+            "api_endpoint": azure_openai_endpoint,
+            "api_version": azure_openai_api_version
+        }
+
+        if azure_openai_api_key is not None:
+            params["api_key"] = azure_openai_api_key
+        elif azure_openai_use_aad:
+            if azure_openai_ad_token is not None:
+                params["azure_ad_token"] = azure_openai_ad_token
+            else:
+                from azure.identity import get_bearer_token_provider, DefaultAzureCredential
+                params["azure_ad_token_provider"] = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
+        else:
+            raise RuntimeError("Please set one of the required environment variables: AZURE_OPENAI_API_KEY or AZURE_OPENAI_USE_AAD")
+        if openai_org_id is not None:
+            params["organization"] = openai_org_id
+
+        return OpenAIAPIWrapper(
+            openai_client = openai.AzureOpenAI(**params),
+            timeout = timeout,
+            max_retries = max_retries
+        )       
 
 
 class OpenAIAPIWrapper:
     """
     A wrapper class for OpenAI's API.
     """
+    _openai_client = None
+    timeout : float = 10
+    max_retries : int = 5
 
-    def __init__(self, api_key, timeout=10):
+    def __init__(
+        self,
+        openai_client : openai.OpenAI | openai.AzureOpenAI, 
+        timeout : float = 10,
+        max_retries : int = 5
+    ):
         """
         Initializes the OpenAIAPIWrapper instance.
 
-        :param api_key: The API key for OpenAI.
+        :param openai_client: The openai client
         :param timeout: The timeout duration in seconds for API requests.
+        :param max_retries: Number of retries for API requests.
         """
-        self.api_key = api_key
-        openai.api_key = api_key
-        if API_BASE is not None:
-           logging.debug("Accessing OPENAI at %s" % API_BASE)
-           openai.api_base = API_BASE
+        self._openai_client = openai_client
         self.timeout = timeout
+        self.max_retries = max_retries
 
     @memoize_to_sqlite(func_name="get_embedding", filename="openai_embedding_cache.db")
     def get_embedding(self, text):
@@ -49,11 +134,11 @@ class OpenAIAPIWrapper:
 
         while time.time() - start_time < self.timeout:
             try:
-                return openai.Embedding.create(input=text, engine=ENGINE)
-            except openai.error.OpenAIError as e:
+                return self._openai_client.embeddings.create(input=text, engine=ENGINE)
+            except openai.OpenAIError as e:
                 logging.error(f"OpenAI API error: {e}")
                 retries += 1
-                if retries >= MAX_RETRIES:
+                if retries >= self.max_retries:
                     raise
                 time.sleep(RETRY_SLEEP_DURATION)
 
@@ -79,16 +164,16 @@ class OpenAIAPIWrapper:
 
         while time.time() - start_time < self.timeout:
             try:
-                res=openai.ChatCompletion.create(**kwargs)
+                res=self._openai_client.completions.create(**kwargs)
                 if isinstance(res, dict):
                    if isinstance(res['choices'][0], dict):
                       return res['choices'][0]['message']['content'].strip()
                    return res['choices'][0].message['content'].strip()
                 return res.choices[0].message['content'].strip()
-            except openai.error.OpenAIError as e:
+            except openai.OpenAIError as e:
                 logging.error(f"OpenAI API error: {e}")
                 retries += 1
-                if retries >= MAX_RETRIES:
+                if retries >= self.max_retries:
                     raise
                 time.sleep(RETRY_SLEEP_DURATION)
 

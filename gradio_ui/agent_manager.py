@@ -4,6 +4,7 @@ from typing import Any, List
 from agents.microagent_manager import MicroAgentManager
 from agents.microagent import MicroAgent
 from agents.parallel_agent_executor import ParallelAgentExecutor
+from integrations.openaiwrapper import OpenAIAPIWrapper
 import time
 logger = logging.getLogger(__name__)
 
@@ -12,8 +13,8 @@ class GradioAgentManager:
     A wrapper class for interacting with MicroAgentManager in a Gradio interface.
     """
 
-    def __init__(self, api_key: str):
-        self.manager = MicroAgentManager(api_key)
+    def __init__(self, openai_wrapper: OpenAIAPIWrapper):
+        self.manager = MicroAgentManager(openai_wrapper)
         self.manager.create_agents()
 
     def stop_all_agents(self) -> None:

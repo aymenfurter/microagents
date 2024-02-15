@@ -13,10 +13,9 @@ class MicroAgentManager:
     Manages the creation and retrieval of micro agents.
     """
 
-    def __init__(self, api_key: str, max_agents: int = 20, db_filename="agents.db"):
-        self.api_key = api_key
+    def __init__(self, openai_wrapper: OpenAIAPIWrapper, max_agents: int = 20, db_filename : str = "agents.db"):
         self.max_agents = max_agents
-        self.openai_wrapper = OpenAIAPIWrapper(api_key)
+        self.openai_wrapper = openai_wrapper
         self.agent_persistence = AgentPersistenceManager(db_filename)
         self.agent_lifecycle = AgentLifecycle(self.openai_wrapper, self.agent_persistence, max_agents)
         self.load_agents()

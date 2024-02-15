@@ -3,7 +3,7 @@ prettytable
 termcolor
 colorama
 terminaltables
-openai==0.28.1
+openai==1.12.0
 textual
 
 # Core Libraries

@@ -6,6 +6,7 @@ from colorama import Fore, Style
 from agents.microagent_manager import MicroAgentManager
 from utils.utility import get_env_variable, time_function
 from ui.format import clear_console, display_agent_info, display_agent_info, print_final_output, format_text
+from integrations.openaiwrapper import get_configured_openai_wrapper
 
 QUESTION_SET = [
     "What is 15+9?",
@@ -63,11 +64,11 @@ QUESTION_SET_2 = [
     "How can I get as many paper clips as possible? (Considering my location, within 24h)"
     ]  
 
-def initialize_manager(api_key):
+def initialize_manager(openai_wrapper):
     """
-    Initialize and return the MicroAgentManager with the given API key.
+    Initialize and return the MicroAgentManager
     """
-    manager = MicroAgentManager(api_key)
+    manager = MicroAgentManager(openai_wrapper)
     manager.create_agents()
     return manager
 
@@ -90,13 +91,14 @@ def process_questions(manager, outputs):
 
 def main():
     load_dotenv()
-    api_key = get_env_variable("OPENAI_KEY")
 
-    if not api_key:
-        print(f"{Fore.RED}🚫 Error: OPENAI_KEY environment variable is not set.{Style.RESET_ALL}")
+    try:
+        openai_wrapper = get_configured_openai_wrapper()
+    except Exception as e:
+        print(f"{Fore.RED}🚫 Error: {e}{Style.RESET_ALL}")
         return
 
-    manager = initialize_manager(api_key)
+    manager = initialize_manager(openai_wrapper)
 
     outputs = []
     stop_event = threading.Event()

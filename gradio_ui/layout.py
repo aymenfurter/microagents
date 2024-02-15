@@ -4,14 +4,11 @@ from .components import AgentTable, AgentDetails, ChatInterface
 from .agent_manager import GradioAgentManager
 from .utils import load_env_variable
 from .log_handler import ListLogHandler
+from integrations.openaiwrapper import get_configured_openai_wrapper
 
 def create_layout():
     """Create and return the layout for the Gradio app."""
-    api_key = load_env_variable("OPENAI_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_KEY environment variable is not set.")
-    
-    agent_manager = GradioAgentManager(api_key)
+    agent_manager = GradioAgentManager(get_configured_openai_wrapper())
 
     # Initialize components
     agent_table = AgentTable(agent_manager)

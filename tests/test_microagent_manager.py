@@ -1,20 +1,22 @@
 import unittest
 from unittest.mock import Mock, patch
 from agents.microagent_manager import MicroAgentManager
+from integrations.openaiwrapper import OpenAIAPIWrapper
+import openai
 
 class TestMicroAgentManager(unittest.TestCase):
 
     def setUp(self):
-        self.api_key = "dummy_api_key"
+        self.openai_wrapper = OpenAIAPIWrapper(openai.OpenAI(api_key="dummy_key"))
         self.max_agents = 20
         self.db_filename = "agents.db"
-        self.micro_agent_manager = MicroAgentManager(self.api_key, self.max_agents, self.db_filename)
+        self.micro_agent_manager = MicroAgentManager(self.openai_wrapper, self.max_agents, self.db_filename)
 
     @patch('agents.microagent_manager.OpenAIAPIWrapper')
     @patch('agents.microagent_manager.AgentPersistenceManager')
     @patch('agents.microagent_manager.AgentLifecycle')
     def test_init(self, MockAgentLifecycle, MockAgentPersistenceManager, MockOpenAIAPIWrapper):
-        micro_agent_manager = MicroAgentManager(self.api_key, self.max_agents, self.db_filename)
+        micro_agent_manager = MicroAgentManager(self.openai_wrapper, self.max_agents, self.db_filename)
         self.assertIsInstance(micro_agent_manager, MicroAgentManager)
 
     @patch('agents.microagent_manager.logging')
