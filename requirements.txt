@@ -1,4 +1,4 @@
-gradio
+gradio==4.0.0
 prettytable
 termcolor
 colorama
