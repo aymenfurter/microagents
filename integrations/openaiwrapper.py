@@ -28,7 +28,7 @@ def get_configured_openai_wrapper(timeout: float = 10, max_retries: int = 5):
     openai_org_id = get_env_variable("OPENAI_ORG_ID", None, False)
     azure_openai_api_key = get_env_variable("AZURE_OPENAI_API_KEY", None, False)
     azure_openai_endpoint = get_env_variable("AZURE_OPENAI_ENDPOINT", None, False)
-    azure_openai_api_version = get_env_variable("AZURE_OPENAI_API_VERSION", "2023-12-01-preview", False)
+    azure_openai_api_version = get_env_variable("AZURE_OPENAI_API_VERSION", "2024-03-01-preview", False)
     azure_openai_use_aad = get_env_variable("AZURE_OPENAI_USE_AAD", "false", False).strip().lower()
     azure_openai_ad_token = get_env_variable("AZURE_OPENAI_AD_TOKEN", None, False)
     azure_client_id = get_env_variable("AZURE_CLIENT_ID", None, False)

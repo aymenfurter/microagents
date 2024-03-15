@@ -50,3 +50,4 @@ coverage.xml
 
 *.db
 !agents.db
+/persistance/**
